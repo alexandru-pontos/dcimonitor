@@ -1,0 +1,1065 @@
+h\documentclass[12pt,a4paper]{article}
+
+% 1. ENCODING & LANGUAGE
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[romanian]{babel}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{forest}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning,calc}
+
+\lstset{
+    inputencoding=utf8,
+    extendedchars=true,
+    literate={├}{|}1 {─}{--}1 {└}{+}1
+}
+
+% Definire limbaj JavaScript
+\lstdefinelanguage{JavaScript}{
+  keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break},
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  ndkeywordstyle=\color{darkgray}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\color{red}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+
+% Definire limbaj YAML
+\lstdefinelanguage{yaml}{
+  keywords={true,false,null,y,n},
+  keywordstyle=\color{darkgray}\bfseries,
+  basicstyle=\ttfamily\small,                                 
+  breaklines=true,                                     
+  inputencoding=utf8,
+  extendedchars=true,
+  literate={-}{-}1,
+  backgroundcolor=\color{lightgray},
+  frame=single,
+  comment=[l]{\#},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\color{blue}\ttfamily,
+  morestring=[b]',
+  morestring=[b]"
+}
+
+% 2. PAGE LAYOUT & GEOMETRY
+\usepackage[a4paper,
+    top=2.5cm,
+    bottom=2.5cm,
+    left=3cm,
+    right=2.5cm,
+    headheight=15pt,
+    footskip=1cm]{geometry}
+
+% 3. PROFESSIONAL TYPOGRAPHY
+\usepackage{newtxtext, newtxmath} % Times New Roman alternative with better math
+\usepackage{microtype} % Micro-typographic improvements
+\usepackage{setspace}
+\onehalfspacing
+
+% 4. MATHEMATICS & SCIENCE
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{bm} % Bold math symbols
+
+% 5. GRAPHICS & TABLES
+\usepackage{graphicx}
+\usepackage{booktabs} % Professional tables
+\usepackage{array} % Extended array functionality
+\usepackage{caption} % Better captions
+\captionsetup{font=small, labelfont=bf}
+
+% 6. REFERENCES & HYPERLINKS
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+    pdfauthor={Vasile BORCILĂ},
+    pdftitle={Detecția dezastrelor naturale și antropogene din surse online},
+    pdfsubject={Cercetare științifică}
+}
+
+% 7. HEADERS & FOOTERS
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textsc{Detecția Dezastrelor din Surse Online}}
+\fancyhead[R]{\small\textsc{\nouppercase{\leftmark}}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% 8. SECTION FORMATTING
+\usepackage{titlesec}
+\titleformat{\section}
+    {\normalfont\Large\bfseries}
+    {\thesection}{1em}{}
+\titleformat{\subsection}
+    {\normalfont\large\bfseries}
+    {\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+    {\normalfont\normalsize\bfseries}
+    {\thesubsubsection}{1em}{}
+
+% 9. ABSTRACT ENVIRONMENT
+\usepackage{abstract}
+\renewcommand{\abstractname}{\vspace{-\baselineskip}}
+\setlength{\absleftindent}{0pt}
+\setlength{\absrightindent}{0pt}
+
+% 10. CUSTOM COMMANDS
+\newcommand{\keyword}[1]{\textbf{#1}}
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+
+% ============================================================================
+% DOCUMENT START
+% ============================================================================
+
+\begin{document}
+
+% TITLE PAGE
+\begin{titlepage}
+    \centering
+    
+    % Logo (uncomment and add your logo)
+    % \vspace*{0.5cm}
+    % \includegraphics[width=0.3\textwidth]{logo.png}
+    
+    \vspace*{2cm}
+    
+    {\LARGE\bfseries Detecția Dezastrelor Naturale și Antropogene\\din Surse Online}
+    
+    \vspace{1.5cm}
+    
+    {\large Documentație tehnică - Arhitectura de rețea}
+    
+    \vspace{2cm}
+    
+    {\large\bfseries Student Sergent Major\\Vasile BORCILĂ}
+    
+    \vspace{1.5cm}
+    
+    \begin{flushleft}
+        \textbf{Coordonator științific:}\\
+        Lt. Col. conf. dr. ing. Ștefan-Adrian TOMA\\[0.5cm]
+        
+        \textbf{Asistent coordonator:}\\
+        Slt. ing. Andrei BRÎNZEA
+    \end{flushleft}
+    
+    \vfill
+    
+    {\large 2025}
+    
+    \vspace{1cm}
+\end{titlepage}
+
+% ABSTRACT
+\newpage
+\phantomsection
+\addcontentsline{toc}{section}{Abstract}
+\begin{abstract}
+    \noindent
+    
+    Această lucrare prezintă o abordare inovatoare pentru detecția automată a dezastrelor naturale și antropogene prin analiza surselor online. Cercetarea propune un sistem integrat care utilizează tehnici moderne de procesare a limbajului natural și învățare automată pentru identificarea rapidă a evenimentelor critice din fluxurile de știri și rețelele sociale. Sistemul implementează mecanisme de validare multisursă și geolocalizare, având ca obiectiv final îmbunătățirea timpului de reacție și furnizarea de alerte timpurii în situații de urgență. Rezultatele preliminare indică o acuratețe semnificativă în clasificarea evenimentelor și o reducere substanțială a timpului de detectare comparativ cu metodele tradiționale.
+    
+    Sistemul menționat va rula ca modul de sine stătător pe o platformă care își propune utilizarea unei arhitecturi de microservicii containerizată bazată, în faza inițială, pe Docker, unde fiecare componentă rulează într-un container izolat care comunică prin intermediul unei rețele Docker dedicate. 
+    
+    \vspace{0.5cm}
+    \noindent\textbf{Cuvinte-cheie:} detecție dezastre, surse online, procesare limbaj natural, învățare automată, sisteme de avertizare timpurie.
+\end{abstract}
+
+% TABLE OF CONTENTS
+\newpage
+\tableofcontents
+
+% LISTS OF FIGURES AND TABLES (optional)
+% \listoffigures
+% \listoftables
+
+% ============================================================================
+% MAIN CONTENT
+% ============================================================================
+
+\newpage
+\section{Introducere}
+\label{sec:introducere}
+
+\hspace{1em} Dezastrele naturale și antropogene reprezintă amenințări majore la adresa securității naționale, a infrastructurii critice și a stabilității socio-economice. În contextul actual, caracterizat de o interconectivitate ridicată  și de un flux informațional accelerat, datele generate în timp real prin platforme online devin surse valoroase pentru detectarea timpurie a evenimentelor cu potențial impact ridicat. 
+
+Cu toate acestea, integrarea și interpretarea coerentă a acestor surse eterogene ridică numeroase provocări, de la volumul și variabilitatea datelor, până la necesitatea aplicării unor mecanisme robuste de filtrare, validare și analiză automată. În acest context, lucrarea de față propune dezvoltarea unui sistem unificat de monitorizare, capabil să identifice automat evenimente critice și să genereze alerte într-un mod rapid și fiabil. 
+
+Pentru a asigura o experiență completă utilizatorului și pentru a facilita controlul asupra întregului flux operațional, sistemul este integrat într-o platformă modulară bazată pe o arhitectură de microservicii. Această abordare permite scalabilitate ridicată, extensibilitate și gestionarea eficientă a fiecărui proces component. 
+
+\subsection{Contextul Cercetării}
+\label{subsec:context}
+
+\hspace{1em} Explozia datelor digitale a creat un mediu propice pentru monitorizarea în timp real a evenimentelor critice. Platforme precum Twitter, Facebook și agențiile de știri generează volume masive de informații care, dacă prelucrate eficient, pot oferi alerte valoroase cu ore sau chiar zile înainte de confirmarea oficială. Totodată, analiza retrospectivă a arhivelor digitale permite identificarea tiparelor și factorilor de risc ascunși.
+
+\subsection{Obiectivele Lucrării}
+\label{subsec:obiective}
+
+\hspace{1em}Scopul principal al acestei cercetări este dezvoltarea unui sistem modular pentru detectarea și analiza dezastrelor utilizând surse online. Obiectivele specifice sunt structurate pe două axe principale:
+
+\subsubsection{Platforma Interactivă de Management}
+\label{subsubsec:platforma}
+
+\begin{itemize}
+    \item \keyword{Arhitectură microservicii} pentru scalabilitate și menținere ușoară
+    \item \keyword{Sistem de autentificare} bazat pe token-uri JWT cu roluri multiple
+    \item \keyword{Interfață vizuală} pentru design-ul workflow-urilor de analiză
+    \item \keyword{Monitorizare în timp real} a modulelor și a stării sistemului
+    \item \keyword{Securitate avansată}: criptare end-to-end și audit trail complet
+\end{itemize}
+
+\subsubsection{Modulul de Detecție Automată}
+\label{subsubsec:modul}
+
+\begin{enumerate}
+    \item \keyword{Colectare distribuită} de date din surse eterogene
+    \item \keyword{Prelucrare lingvistică} cu modele ROM-specific
+    \item \keyword{Validare cross-source} pentru reducerea falselor alarme
+    \item \keyword{Integrare API} cu servicii de imagistică satelitară
+    \item \keyword{Generare rapoarte} cu vizualizări geospațiale interactive
+\end{enumerate}
+
+\section{Fundamentare Teoretică}
+\label{sec:fundamentare}
+
+\subsection{Taxonomia Dezastrelor}
+\label{subsec:taxonomie}
+
+\begin{table}[h]
+    \centering
+    \caption{Clasificarea principalelor tipuri de dezastre monitorizate}
+    \label{tab:clasificare}
+    \begin{tabular}{@{}lll@{}}
+        \toprule
+        \textbf{Categorie} & \textbf{Subtipuri} & \textbf{Indicatori Online} \\
+        \midrule
+        Naturale & Inundații, cutremure, incendii & Rapoarte meteo, postări sociale \\
+        Antropogene & Accidente industriale, deraieri & Știri locale, rapoarte oficiale \\
+        Hibride & Incendii cauzate de om & Analiză multimodală \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Surse de Date Relevante}
+\label{subsec:surse}
+
+Ecosistemul de surse online include:
+
+\begin{itemize}
+    \item \textbf{Rețele sociale}: Twitter (X), Facebook, Instagram
+    \item \textbf{Agenții de știri}: Digi24, HotNews, Reuters
+    \item \textbf{Instituții oficiale}: IGSU, ANM, NASA EONET
+    \item \textbf{Senzori remote}: Imagini satelitare, IoT devices
+\end{itemize}
+
+
+
+
+\section{Arhitectura Sistemului}
+\label{sec:arhitectura}
+
+\hspace{1em}Arhitectura sistemului este structurată în două componente fundamentale: (1) platforma de microservicii, care oferă infrastructura necesară pentru gestionarea proceselor de colectare, procesare și distribuire a datelor, și (2) sistemul de detecție automată, responsabil pentru identificarea și clasificarea evenimentelor asociate dezastrelor naturale și antropogene. Această separare permite scalarea independentă a fiecărui subsistem și menținerea unui nivel ridicat de flexibilitate în ceea ce privește extinderea sau actualizarea componentelor.
+
+Figura~\ref{fig:arhitectura} prezintă o privire de ansamblu asupra interacțiunii dintre cele două componente principale.
+
+
+\begin{figure}[H]
+    \centering
+   \includegraphics[width=0.95\textwidth, keepaspectratio]{arhitectura_sistem.png}
+    \caption{Diagrama arhitecturală a sistemului propus}
+    \label{fig:arhitectura}
+\end{figure}
+
+
+\subsection{Platforma de Microservicii}
+\label{subsec:platforma}
+
+\hspace{1em}Platforma de microservicii constituie infrastructura de bază a sistemului și este proiectată pentru a asigura modularitate, scalabilitate și izolare între componente. Fiecare microserviciu rulează într-un container dedicat, facilitând gestionarea resurselor, portabilitatea și reziliența aplicației. Comunicarea între servicii se realizează prin intermediul unei rețele interne, permițând schimbul securizat de date și coordonarea eficientă a fluxurilor operaționale.
+
+Arhitectura platformei încorporează servicii specializate pentru achiziția de date din surse online eterogene, administrarea sistemului de mesagerie asincronă, orchestrarea automată a proceselor de prelucrare și expunerea interfețelor API conforme standardului REST, necesare interacțiunii cu modulul de detecție și aplicațiile client. Structura modulară adoptată permite substituirea sau extinderea granulară a componentelor individuale, menținând integritatea funcțională și continuitatea operațională a sistemului în ansamblu.
+
+\begin{enumerate}
+    \item \textbf{Componentele platformei}
+        \begin{itemize}
+            \item {Frontend}
+            \item {Backend}
+            \item {Baza de date}
+            \item {Containere dinamice}
+        \end{itemize}
+    \item \textbf{Comunicarea serviciilor}
+        \begin{itemize}
+            \item {Comunicarea sincronă}
+            \item {Gestionarea ciclului de viață al containerelor}
+            \item {Mecanisme de reziliență}
+        \end{itemize}
+    \item \textbf{Containere dinamice}
+\end{enumerate}
+
+
+\subsection{Sistemul de Detecție Automată}
+\label{subsubsec:detectie}
+
+\hspace{1em}Sistemul de detecție automată reprezintă componenta analitică a arhitecturii și integrează tehnici avansate de procesare a limbajului natural și algoritmi de învățare automată. Rolul său principal este identificarea rapidă a evenimentelor critice pe baza informațiilor extrase din fluxurile de știri, rețelele sociale și alte surse relevante.
+
+Acesta include module pentru filtrarea și curățarea datelor, modele NLP pentru clasificare și extragere de entități, precum și mecanisme de validare multisursă și geolocalizare. Sistemul funcționează în strânsă legătură cu platforma de microservicii, de la care primește date pre-procesate și către care transmite rezultatele detectate, facilitând generarea alertelor și integrarea cu aplicații externe.
+
+\subsubsection{Arhitectura modulului de detecție}
+\label{subsubsec:arhitectura_modului_de_detecție}
+\hspace{1em} Sistemul de detecție constituie componenta analitică centrală a arhitecturii propuse, fiind responsabil pentru identificarea clară și specifică a evenimentelor cu dezastre naturale sau antropogene din fluxurile informaționale digitale. Arhitectura modulului este structurată în straturi funcționale distincte, fiecare implementând transformări specifice asupra datelor pe măsură ce acestea progresează de la forma brută până la alerte validate și geolocalizate. 
+
+\subsubsection{Colectarea și preprocesarea datelor}
+\hspace{1em}Achiziția datelor din surse eterogene reprezintă fundația pe care se construiește întregul proces de detecție, calitatea și diversitatea surselor influențează în mod direct acuratețea finală a sistemului. 
+
+\subsubsection{Procesarea limbajului natural}
+\hspace{1em}Stratul de procesare a limbajului natural transformă textele preprocesate în reprezentări structurate care permit clasificarea automată și extragerea informațiilor critice. 
+
+\subsubsection{Validarea multisursă și geolocalizare}
+\hspace{1em}Credibilitatea informațiilor detectate constituie o provocare centrală în contextul ecosistemului informațional contemporan, caracterizat de proliferarea rapidă a dezinformării și a conținutului neverificat. 
+
+\subsection{Pipeline-ul de Prelucrare}
+\label{subsec:pipeline}
+
+Fluxul de date include următoarele etape:
+
+\begin{enumerate}
+    \item \textbf{Colectare de date}: Colectare paralelă din API-uri și RSS feeds
+    \item \textbf{Filtrare}: Eliminare duplicatelor și a conținutului irelevant
+    \item \textbf{Analiză}: Aplicarea modelelor NLP pentru clasificare
+    \item \textbf{Validare}: Corelarea cu surse oficiale și verificare geografică
+    \item \textbf{Agregare}: Gruparea evenimentelor și generare rapoarte
+\end{enumerate}
+
+
+\subsection{Infrastructura de Rețea și Comunicații}
+\label{subsec:retea}
+
+\hspace{1em} Arhitectura de comunicație a sistemului se bazează pe o rețea virtualizată definită software (SDN - Software Defined Networking), implementată nativ prin intermediul driverului de rețea \texttt{bridge} al platformei Docker. Această abordare asigură o izolare completă a traficului intern al aplicației față de rețeaua gazdă și internet, constituind primul nivel de securitate al platformei. 
+
+În cadrul fișierului de configurare \texttt{docker-compose.yml}, a fost definită o rețea dedicată denumite \texttt{app-network}. Toate microserviciile componente (\textit{Backend}, \textit{Frontend}, \textit{MongoDB}) sunt atașate acestei rețele, permițând comunicarea nerestricționată între ele pe orice port, în timp ce accesul din exterior este strict limitat la porturile publicate explicit (80 pentru interfața web și, opțional, 5000 pentru API în mediul de dezvoltare). 
+
+\subsubsection{Mecanismul de Service Discovery}
+\hspace{1em} Într-un mediu distribuit dinamic, adresele IP ale containerelor se pot modifica la fiecare repornire. Pentru a asigura o comunicare robustă între servicii, sistemul utilizează mecanismul de \textit{Service Discovery} bazat pe DNS (Domain Name System) intern al Docker. 
+
+Fiecare container primește automat o intrare DNS corespunzătoare numelui său de serviciu. Astfel, componenta de Backend se conectează la baza de date utilizând hostname-ul \texttt{mongodb} (definit în string-ul de conexiune \texttt{mongodb://admin:...@monogodb:27017}), iar serverul Nginx direcționează cererile API către hostname-ul \texttt{backend}. Sistemul Docker interceptează aceste cereri DNS și le rezolvă către adresa IP internă curentă a containerului destinatar, eliminând necesitatea configurării statice a adreselor IP și facilitând scalabilitatea orizontală. 
+
+
+\subsubsection{Gestionarea Traficului prin Reverse Proxy}
+\hspace{1em} Punctul central de intrare (Ingress) în sistem este gestionat de serverul web Nginx, configurat să funcționeze ca un \textit{Reverse Proxy}. Acesta ascultă cererile HTTP pe portul standard 80 și le distribuie intern în funcție de ruta solicitată, după cum este ilustrat în configurația din \texttt{nginx.conf}: 
+\begin{itemize} 
+    \item \textbf{Trafic Static:} Cererile către rădăcina site-ului (\texttt{/}) sunt servite direct din sistemul de fișiere al containerului Frontend, oferind utilizatorului aplicația React compilată (fișiere HTML, CSS, JS optimizate). 
+    \item \textbf{Trafic Dinamic (API):} Cererile care au prefixul \texttt{/api} sunt interceptate și rutate transparent către microserviciul Backend pe portul 5000 (\texttt{proxy\_pass http://backend:5000}).
+\end{itemize}
+
+Această arhitectură oferă multiple avantaje: 
+\begin{enumerate}
+    \item \textbf{Securitate prin obscuritate:} Structura internă a backend-ului și porturile acestuia nu sunt expuse direct internetului. 
+    \item \textbf{Politica Same-Origin:} Deoarece atât interfața grafică cât și API-ul sunt servite de pe același domeniu și port (prin intermediul proxy-ului), sunt eliminate problemele complexe legate de CORS (Cross-Origin Resource Sharing) în producție. 
+    \item \textbf{Performanță:} Nginx gestionează eficient comprezia Gzip a răspunsurilor și cache-ul pentru fișierele statice, reducând încărcarea pe serverul de aplicație Node.js. 
+\end{enumerate}
+
+\subsection{Securitatea Comunicațiilor}
+\label{subsec:securitate_comunicatii}
+
+\hspace{1em} Securitatea comunicațiilor reprezintă o componentă critică în arhitectura sistemului propus, având menirea de a proteja integritatea și confidențialitatea datelor în tranzit, precum și de a preveni exploatarea vulnerabilităților comune din contextul aplicațiilor web moderne. Implementarea măsurilor defensive se realizează printr-o strategie de securitate în adâncime (\textit{defense-in-depth}), aplicând mecanisme de protecție la multiple straturi ale stack-ului tehnologic: de la configurarea header-elor HTTP de securitate, până la implementarea protocoalelor robuste de autentificare și autorizare. 
+
+\subsubsection{Securitatea datelor și autentificarea}
+\hspace{1em} Sistemul implementează mecanisme de protecție multistrat pentru datele persistente și credențialele utilizatorilor. Baza de date este izolată la nivel de rețea în segmentul intern Docker, accesibilă exclusiv prin autentificare bazată pe roluri (RBAC), eliminând expunerea directă către exterior. Parolele utilizatorilor sunt stocate în format hash-uit cu algoritmi criptografici rezistenți la atacuri de tip rainbow table și brute-force, asigurând confidențialitatea chiar în cazul compromiterii bazei de date.
+
+\subsubsection{Managementul secretelor}
+\hspace{1em} Datele sensibile (chei de criptare, credențiale de conectare, token-uri API) sunt gestionate prin mecanisme dedicate care separă secretele de codul aplicației și configurațiile publice. Arhitectura adoptă principiul privilegiului minim pentru accesul la Docker Engine, implementând validare strictă a operațiunilor și audit complet al comenzilor executate. Pentru medii de producție, sistemul suportă integrare cu servicii externe de management al secretelor, asigurând rotație automată și versionare controlată
+
+\subsubsection{Criptarea comunicațiilor}
+\hspace{1em} Traficul între client și platformă este protejat prin protocoale de criptare moderne (TLS/SSL), implementate la nivelul gateway-ului de intrare. Sistemul forțează utilizarea exclusivă a conexiunilor securizate în producție prin politici de transport strict (HSTS) și restricționează protocoalele la versiunile fără vulnerabilități cunoscute. Token-urile de autentificare sunt transmise exclusiv prin canale criptate, prevenind interceptarea în atacuri de tip man-in-the-middle.
+
+\subsubsection{Controlul accesului și monitorizarea}
+\hspace{1em} Platforma implementează mecanisme de protecție împotriva abuzului automatizat prin limitarea ratei de cereri la nivel de gateway și aplicație, diferențiată în funcție de sensibilitatea endpoint-urilor. Autentificarea este protejată prin blocări temporare ale conturilor după încercări eșuate repetate. Toate operațiunile critice sunt înregistrate în jurnale de audit structurate, permițând trasabilitatea acțiunilor utilizatorilor și detectarea incidentelor de securitate prin analiză retrospectivă sau în timp real.
+
+\section{Design de date}
+
+\hspace{1em} Sistemul utilizează o bază de date orientată pe documente (MongoDB) pentru stocarea informațiilor persistente, beneficiind de flexibilitatea schemelor JSON și scalabilitatea orizontală specifică arhitecturilor NoSQL. Modelul de date este structurat în jurul a două entități principale: utilizatorii platformei și proiectele (containerele) gestionate de aceștia. 
+
+\subsection{Model de date}
+\hspace{1em}Entitatea \textbf{Users} stochează informațiile de identificare și autentificare ale utilizatorilor, incluzând credențialele criptate și rolurile de acces (administrator sau utilizator simplu). Schema implementează validări la nivel de bază de date pentru asigurarea integrității datelor (unicitate email, format valid, lungime minimă parolă) și indexare pentru optimizarea interogărilor de autentificare. 
+
+Entitatea \textbf{Projects} reprezintă abstracția containerelor Docker gestionate prin platformă, stocând metadatele configurației (nume, descriere, tip mediu- \texttt{producție/staging/development}, starea operațională- \texttt{activ/inactiv/arhivat}) și legătura cu utilizatorul proprietar prin referință. În completare, sistemul asigură persistența reprezentării vizuale a fluxului de lucru (workflow) sub forma unui graf direcționat, compus din noduri și muchii.
+
+La nivelul modelului de date, relațiile dintre entități sunt normalizate prin referințe de tip \texttt{ObjectID}, asigurând integritatea legăturilor în MongoDB. Arhitectura implementează o relație de tip \textbf{one-to-one} între fiecare proiect și utilizatorul aferent, mecanism esențial pentru segregarea datelor și aplicarea riguroasă a politicilor de control al accesului bazate pe ownership. Eficiența operațională este garantată prin indexarea strategică a câmpurilor interogate frecvent (precum \texttt{email}, \texttt{owner} și \texttt{status}), optimizând timpii de răspuns chiar și în cazul unor volume masive de date. 
+
+
+\subsection{Fluxuri de date}
+\hspace{1em} Circulația datelor în sistem urmează pattern-uri bine definite, de la interacțiunea utilizatorului cu interfața grafică până la persistența în baza de date și execuția operațiunilor Docker. 
+
+\subsubsection{Fluxul de management containere}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.8cm,
+        component/.style={rectangle, draw=black, thick, minimum width=2cm, minimum height=0.8cm, align=center},
+        message/.style={->, thick, >=Stealth},
+        return/.style={->, dashed, thick, >=Stealth}
+    ]
+        % Componente
+        \node[component] (user) {User};
+        \node[component, right=1.2cm of user] (frontend) {Frontend};
+        \node[component, right=1.2cm of frontend] (nginx) {Nginx};
+        \node[component, right=1cm of nginx] (backend) {Backend};
+        \node[component, right=1.6cm of backend] (docker) {Docker};
+        \node[component, right=0.5cm of docker] (db) {MongoDB};
+        
+        % Linii de viață
+        \foreach \comp in {user, frontend, nginx, backend, docker, db} {
+            \draw[dashed] (\comp.south) -- ++(0,-9);
+        }
+        
+        % Mesaje
+        \draw[message] ($(user.south)+(0,-0.5)$) -- ($(frontend.south)+(0,-0.5)$) 
+            node[midway, above, font=\scriptsize] {1. Create container};
+        
+        \draw[message] ($(frontend.south)+(0,-1.2)$) -- ($(nginx.south)+(0,-1.2)$) 
+            node[midway, above, font=\scriptsize] {2. POST /api/containers};
+        
+        \draw[message] ($(nginx.south)+(0,-1.9)$) -- ($(backend.south)+(0,-1.9)$) 
+            node[midway, above, font=\scriptsize] {3. Proxy + JWT};
+        
+        % Bloc de procesare backend (4-6)
+        \draw[thick, rounded corners] ($(backend.south)+(0.3,-2.3)$) rectangle ($(backend.south)+(3.5,-3.8)$);
+        \node[font=\scriptsize, align=left] at ($(backend.south)+(1.9,-2.6)$) {4. Validate JWT};
+        \node[font=\scriptsize, align=left] at ($(backend.south)+(1.9,-3.1)$) {5. Check permissions};
+        \node[font=\scriptsize, align=left] at ($(backend.south)+(1.9,-3.6)$) {6. Validate params};
+        
+        \draw[message] ($(backend.south)+(0,-4.3)$) -- ($(docker.south)+(0,-4.3)$) 
+            node[midway, above, font=\scriptsize] {7. docker run};
+        
+        \draw[return] ($(docker.south)+(0,-4.9)$) -- ($(backend.south)+(0,-4.9)$) 
+            node[midway, above, font=\scriptsize] {8. Container ID};
+        
+        \draw[message] ($(backend.south)+(0,-5.5)$) -- ($(db.south)+(0,-5.5)$) 
+            node[midway, above, font=\scriptsize] {9. Save metadata};
+        
+        \draw[return] ($(db.south)+(0,-6.1)$) -- ($(backend.south)+(0,-6.1)$) 
+            node[midway, above, font=\scriptsize] {10. Confirmation};
+        
+        \draw ($(backend.south)+(0,-6.7)$) node[right, font=\scriptsize] {11. Log operation};
+        
+        \draw[return] ($(backend.south)+(0,-7.3)$) -- ($(nginx.south)+(0,-7.3)$) 
+            node[midway, above, font=\scriptsize] {12. Success response};
+        
+        \draw[return] ($(nginx.south)+(0,-7.9)$) -- ($(frontend.south)+(0,-7.9)$) 
+            node[midway, above, font=\scriptsize] {13. Forward};
+        
+        \draw[return] ($(frontend.south)+(0,-8.5)$) -- ($(user.south)+(0,-8.5)$) 
+            node[midway, above, font=\scriptsize] {14. Update UI};
+        
+    \end{tikzpicture}
+    \caption{Diagrama de secvență - Flux de creare container Docker}
+    \label{fig:container_flow}
+\end{figure}
+
+
+\hspace{1em} La cererea de creare a unui container, interfața transmite parametrii de configurare (nume, imagine Docker, tip) către endpoint-ul \texttt{/api/containers} prin cerere POST autentificată. Backend-ul validează permisiunile utilizatorului, verifică parametrii împotriva listei de imagini permise, și emite comanda corespunzătoare către Docker Engine prin socket. Post-instanțiere, metadatele containerului sunt stocate în MongoDB (asociate cu \texttt{userID} și \texttt{timestamp}), procesul finalizându-se prin transmiterea confirmării către client.  
+
+
+\subsubsection{Fluxul de date în modulul de detecție }
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        node distance=0.8cm,
+        component/.style={rectangle, draw=black, thick, minimum width=2.2cm, minimum height=0.8cm, align=center},
+        message/.style={->, thick, >=Stealth},
+        return/.style={->, dashed, thick, >=Stealth}
+    ]
+        % Componente
+        \node[component] (ai) {AI Module};
+        \node[component, right=1.5cm of ai] (newsapi) {NewsAPI};
+        \node[component, right=1.5cm of newsapi] (scraper) {Web Scraper};
+        \node[component, right=1.5cm of scraper] (nlp) {NLP Engine};
+        \node[component, right=1.5cm of nlp] (storage) {CSV Storage};
+        
+        % Linii de viață
+        \foreach \comp in {ai, newsapi, scraper, nlp, storage} {
+            \draw[dashed] (\comp.south) -- ++(0,-6);
+        }
+        
+        % Mesaje
+        \draw[message] ($(ai.south)+(0,-0.5)$) -- ($(newsapi.south)+(0,-0.5)$) 
+            node[midway, above, font=\scriptsize] {1. Query (keywords)};
+        
+        \draw[return] ($(newsapi.south)+(0,-1)$) -- ($(ai.south)+(0,-1)$) 
+            node[midway, above, font=\scriptsize] {2. Article URLs};
+        
+        \draw[message] ($(ai.south)+(0,-1.5)$) -- ($(scraper.south)+(0,-1.5)$) 
+            node[midway, above, font=\scriptsize] {3. Scrape content};
+        
+        \draw[return] ($(scraper.south)+(0,-2)$) -- ($(ai.south)+(0,-2)$) 
+            node[midway, above, font=\scriptsize] {4. Full text};
+        
+        \draw[message] ($(ai.south)+(0,-2.5)$) -- ($(nlp.south)+(0,-2.5)$) 
+            node[midway, above, font=\scriptsize] {5. Extract entities};
+        
+        \draw ($(nlp.south)+(0,-3)$) node[right, font=\scriptsize] {6. spaCy processing};
+        
+        \draw ($(nlp.south)+(0,-3.5)$) node[right, font=\scriptsize] {7. GPT relevance check};
+        
+        \draw[return] ($(nlp.south)+(0,-4)$) -- ($(ai.south)+(0,-4)$) 
+            node[midway, above, font=\scriptsize] {8. Entities (LOC, DATE)};
+        
+        \draw[message] ($(ai.south)+(0,-4.5)$) -- ($(storage.south)+(0,-4.5)$) 
+            node[midway, above, font=\scriptsize] {9. Save results};
+        
+        \draw[return] ($(storage.south)+(0,-5)$) -- ($(ai.south)+(0,-5)$) 
+            node[midway, above, font=\scriptsize] {10. Confirmation};
+        
+    \end{tikzpicture}
+    \caption{Diagrama de secvență - Flux de procesare în modulul de detecție AI}
+    \label{fig:ai_flow}
+\end{figure}
+
+\hspace{1em} Sistemul AI4PSInSAR colectează articole de știri din API-uri externe (NewsAPI), extrage conținutul prin web scraping, și aplică modele de procesare a limbajului natural pentru clasificare și extragere de entități (locații, date, evenimente). Rezultatele sunt exportate în format CSV și pot fi integrate în platforma principală prin API-uri dedicate, facilitând vizualizarea evenimentelor detectate și corelarea cu date geospațiale.
+
+Toate fluxurile implementează validare la multiple niveluri (client-side pentru experiență utilizator, server-side pentru securitate) și logging consistent pentru trasabilitate, asigurând integritatea datelor pe întreaga cale de la sursă la destinație.
+
+\section{Tehnologii și Stack Utilizat}
+
+Platforma este construită folosind un stack modern de tehnologii web și containerizare, asigurând scalabilitate, securitate și mentenabilitate.
+
+\subsection{Frontend}
+\begin{itemize}
+    \item \textbf{React 18.3.1} reprezintă framework-ul principal pentru construirea interfeței utilizator
+    \item \textbf{Vite 5.4.10} utilizat ca build tool
+    \item \textbf{React Router v6:} Navigare SPA (Single Page Application)
+    \item \textbf{Context API:} State management global (autentificare)
+    \item \textbf{Nginx:} Web server în producție
+\end{itemize}
+
+\subsection{Backend}
+\begin{itemize}
+    \item \textbf{Node.js cu Express.js 4.21.1} formează baza API-ului RESTful:
+\end{itemize}
+
+\textbf{Autentificare și Securitate:}
+\begin{itemize}
+    \item \textbf{JWT (jsonwebtoken 9.0.2):} Token-based authentication
+    \item \textbf{bcryptjs 2.4.3:} Password hashing (10 salt rounds)
+    \item \textbf{helmet 8.0.0:} HTTP security headers
+    \item \textbf{cors 2.8.5:} Cross-origin request handling
+\end{itemize}
+
+\subsection{Baza de Date}
+
+\textbf{MongoDB 7.0} - NoSQL document database:
+\begin{itemize}
+    \item Schema flexibilă pentru diverse tipuri de containere
+    \item Indexare pentru performanță (email unique index)
+    \item Replicare și backup prin Docker volumes
+\end{itemize}
+
+
+\subsection{Containerizare}
+
+\textbf{Docker} - Platformă de containerizare:
+\begin{itemize}
+    \item Izolare aplicații și dependențe
+    \item Portabilitate între medii (dev, staging, production)
+    \item Resource limiting (CPU, memory)
+\end{itemize}
+
+\textbf{Docker Compose} - Orchestrare multi-container:
+\begin{itemize}
+    \item Definire servicii (frontend, backend, mongodb)
+    \item Network management (bridge network)
+    \item Volume persistente pentru date
+\end{itemize}
+
+\subsection{Integrare AI4PSInSAR-DefoNews}
+
+Sistemul de monitorizare dezastre naturale utilizează:
+\begin{itemize}
+    \item \textbf{Python 3.x:} Limbaj principal
+    \item \textbf{spaCy:} NLP pentru entity extraction (GPE, LOC, DATE)
+    \item \textbf{OpenAI GPT API:} Relevance checking articole
+    \item \textbf{BeautifulSoup4:} Web scraping conținut articole
+    \item \textbf{NewsAPI.org:} Retrieval știri
+\end{itemize}
+
+\subsection{Justificarea Alegerilor Tehnologice}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|p{8cm}|}
+\hline
+\textbf{Tehnologie} & \textbf{Justificare} \\
+\hline
+React & Ecosistem matur, performanță ridicată, comunitate activă \\
+\hline
+Node.js + Express & JavaScript full-stack, async I/O, integrare facilă Docker \\
+\hline
+MongoDB & Flexibilitate schema, scalabilitate orizontală, JSON native \\
+\hline
+JWT & Stateless authentication, scalabilitate, mobile-friendly \\
+\hline
+Docker & Portabilitate, izolare, deployment consistent \\
+\hline
+\end{tabular}
+\caption{Justificarea tehnologiilor principale}
+\end{table}
+
+
+
+\section{Implementarea Platformei}
+Acest capitol prezintă implementarea tehnică a platformei și integrarea sistemului de monitorizare, ilustrate prin capturi de ecran relevante.
+
+\subsection{Interfața Utilizator}
+
+\subsubsection{Autentificare}
+
+Sistemul implementează autentificare JWT cu validare client-side și server-side.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{images/login_page.png}
+    \caption{Pagina de autentificare}
+    \label{fig:login}
+\end{figure}
+
+\clearpage
+\subsubsection{Dashboard}
+
+Dashboard-ul user-ului  centralizează accesul la containere și proiecte.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/dashboard.png}
+    \caption{Dashboard principal cu statistici}
+    \label{fig:dashboard}
+\end{figure}
+
+Dashboard-ul admin-ului permite administrarea utilizatorilor din sistem: 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/admin_dashboard.png}
+    \caption{Dashboard principal cu statistici}
+    \label{fig:admin_dashboard}
+\end{figure}
+
+O altă secțiune a dashboard-ului admin-ului permite vizualizarea stării containerelor existente și are o imagine de ansamblu asupra întregii infrastructuri: 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{images/admin_containers.png}
+    \caption{Dashboard principal cu statistici}
+    \label{fig:admin_containers}
+\end{figure}
+
+\subsubsection{Gestionare Containere}
+
+Interfața permite operații CRUD complete pe containere Docker.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/create_container.png}
+    \caption{Formular creare container nou}
+    \label{fig:create_container}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/container_list.png}
+    \caption{Lista containerelor cu acțiuni disponibile}
+    \label{fig:containers}
+\end{figure}
+
+
+Parametrii configurabili:
+\begin{itemize}
+    \item Nume și imagine Docker
+    \item Tipul container-ului
+    \item Descriere
+\end{itemize}
+
+De asemenea, va fi implementată funcționalitatea de vizualizare a logurilor din container pentru rezolvarea problemelor ce pot apărea pe parcursul construirii fluxului. 
+
+\subsection{Backend API}
+
+\subsubsection{Structura Proiectului}
+
+Backend-ul este organizat în arhitectură MVC:
+
+\begin{forest}
+  for tree={
+    font=\ttfamily,
+    grow'=0,
+    child anchor=west,
+    parent anchor=south,
+    anchor=west,
+    calign=first,
+    edge path={
+      \noexpand\path [draw, \forestoption{edge}]
+      (!u.south west) +(7.5pt,0) |- node[fill,inner sep=1.25pt] {} (.child anchor)\forestoption{edge label};
+    },
+    before typesetting nodes={
+      if n=1
+        {insert before={[,phantom]}}
+        {}
+    },
+    fit=band,
+    before computing xy={l=15pt},
+  }
+[Backend/
+  [src/
+    [controllers/]
+    [models/]
+    [routes/]
+    [middleware/]
+    [utils/]
+  ]
+  [server.js]
+]
+\end{forest}
+
+\subsubsection{Integrare Docker}
+
+Comunicarea cu Docker Engine se realizează prin Docker socket.
+
+\begin{lstlisting}[
+    language=JavaScript,
+    caption={Funcția de creare container Docker din Backend},
+    label={lst:create-container},
+    basicstyle=\small\ttfamily,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{orange},
+    showstringspaces=false,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    frame=single,
+    rulecolor=\color{black!30}
+]
+const createContainer = async (req, res) => {
+    const { name, image, ports } = req.body;
+    
+    // Construire comenzii Docker
+    let cmd = `docker run -d --name ${name}`;
+    ports.forEach(p => cmd += ` -p ${p.host}:${p.container}`);
+    cmd += ` ${image}`;
+    
+    // Executare comenzii și extragerea ID container
+    const { stdout } = await execPromise(cmd);
+    const containerId = stdout.trim();
+    
+    // Salvare metadata în MongoDB
+    await saveMetadata({ 
+        containerId, 
+        name, 
+        userId: req.userId 
+    });
+    
+    // Trimiterea rezultatului catre client 
+    res.status(201).json({ 
+        success: true, 
+        containerId 
+    });
+};
+\end{lstlisting}
+
+\subsection{Deployment}
+
+Aplicația este orchestrată cu Docker Compose:
+
+\begin{lstlisting}[language=yaml, caption=docker-compose.yml (simplificat)]
+services:
+  mongodb:
+    image: mongo:7.0
+    volumes:
+      - mongodb_data:/data/db
+  
+  backend:
+    build: ./Backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - mongodb
+  
+  frontend:
+    build: ./Frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+\end{lstlisting}
+
+\subsection{Implementarea Sistemului de Detecție}
+
+\subsubsection{Modulul AI4PSInSAR - DefoNews: Implementare actuală (versiunea standalone)}
+
+În versiunea actuală, modulul AI4PSInSAR-DefoNews funcționează ca un container Docker independent, fără integrare directă cu platforma de management. Această abordare a fost adoptată pentru a permite testarea și validarea pipeline-ului de detecție înainte de integrarea completă în ecosistemul platformei.
+
+Modulul este containerizat folosind o imagine Docker bazată pe Python 3.10, care încapsulează toate dependențele necesare: 
+
+\begin{itemize}
+    \item \textbf{Modele NLP pre-încărcate}: Imaginea include modele spaCy preinstalate:
+        \begin{itemize}
+            \item \textit{en\_core\_web\_lg} - pentru procesarea textelor în limba engleză 
+            \item \textit{ro\_core\_news\_lg} - pentru procesarea textelor în limba română
+        \end{itemize}
+    
+    \item \textbf{Configurare statică}. Parametri obligatorii vor fi:
+        \begin{itemize}
+            \item \texttt{NEWS\_API\_KEY} - Acces NewsAPI.org
+            \item \texttt{OPENAI\_API\_KEY} - Acces OpenAI GPT
+            \item \texttt{LANGUAGE} - Romanian/English
+        \end{itemize}
+
+    \item \textbf{Procesare Batch}: Containereul rulează ca task unic (one-shot execution) executând scriptul \textit{code.py} la pornire, procesând articolele și salvând rezultatele în format CSV în directorul \texttt{/app/output}. 
+\end{itemize}
+
+\textbf{Limitări ale implementării actuale} 
+\begin{enumerate}
+    \item \textbf{Lipsa interactivității: } Nu există interfață de control - containerul trebuie pornit manual din linia de comandă 
+    \item \textbf{Configurare rigidă:} Parametrii (keywords, limita de articole, limba) sunt hard-coded în imagine
+    \item \textbf{Izolare completă: } Nu există comunicare cu platforma de management- rezultatele rămân în container
+    \item \textbf{Funcționare unică:} După finalizarea procesării, containerul se oprește - este necesar restart manual pentru o nouă sesiune. 
+\end{enumerate}
+
+
+
+\textbf{Pipeline-ul Actual de Procesare}
+
+Sistemul de detecție automată urmează un flux de procesare secvențial, ilustrat în Figura~\ref{fig:ai4psinsar-pipeline}, care transformă articole de știri în date structurate despre dezastre naturale și antropogene.
+
+
+
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+    node distance=4cm,
+    every node/.style={font=\footnotesize},
+    box/.style={rectangle, draw=blue!60, fill=blue!10, text width=2.2cm, align=center, 
+                minimum height=0.9cm, rounded corners=2pt, line width=0.8pt},
+    arrow/.style={->, >=stealth, thick, blue!70}
+]
+% Prima linie (stanga -> dreapta)
+\node[box] (start) {Container\\Start};
+\node[box, right of=start] (keywords) {Citire\\Keywords RO};
+\node[box, right of=keywords] (newsapi) {Interogare\\NewsAPI};
+\node[box, right of=newsapi] (scrape) {Web Scraping\\Conținut};
+% A doua linie (dreapta -> stanga)
+\node[box, below of=scrape, node distance=1.5cm] (openai) {Validare\\OpenAI GPT-4};
+\node[box, left of=openai] (spacy) {Extracție\\Entități spaCy};
+\node[box, left of=spacy] (csv) {Salvare CSV\\în /output};
+\node[box, left of=csv] (stop) {Container\\Stop};
+% Săgeți
+\draw[arrow] (start) -- (keywords);
+\draw[arrow] (keywords) -- (newsapi);
+\draw[arrow] (newsapi) -- (scrape);
+\draw[arrow] (scrape) -- (openai);
+\draw[arrow] (openai) -- (spacy);
+\draw[arrow] (spacy) -- (csv);
+\draw[arrow] (csv) -- (stop);
+\end{tikzpicture}
+\caption{Pipeline-ul de procesare al modulului AI4PSInSAR-DefoNews}
+\label{fig:ai4psinsar-pipeline}
+\end{figure}
+
+
+Fiecare etapă a pipeline-ului îndeplinește o funcție specifică în procesul de extracție a informațiilor:
+\begin{enumerate}
+    \item \textbf{Citire Keywords}: Încarcă cuvintele-cheie specifice dezastrelor din fișierul de configurare (e.g., ``inundație'', ``cutremur'', ``incendiu'').
+    
+    \item \textbf{Interogare NewsAPI}: Construiește query-uri de căutare și retrievă URL-urile articolelor relevante din surse de știri on-line (maxim 200 articole per rulare).
+    
+    \item \textbf{Web Scraping}: Extrage conținutul complet al fiecărui articol folosind biblioteca BeautifulSoup4, eliminând elementele script și stil.
+    
+    \item \textbf{Validare OpenAI}: Verifică relevanța articolului prin intermediul modelului GPT-4, filtrând articolele care nu menționeză simultan cauza, data și locația evenimentului.
+    
+    \item \textbf{Extracție Entități}: Aplică modele NLP spaCy pentru identificarea entităților geografice (GPE, LOC), temporale (DATE) și evenimente (EVENT).
+    
+    \item \textbf{Salvare Rezultate}: Exportă datele structurate în format CSV, cu metadate despre poziția entităților în text și distanța față de cuvintele-cheie.
+\end{enumerate}
+
+
+\subsubsection{Implementarea Planificată: Integrarea cu Platforma}
+\hspace{1em} În versiunea planificată, modulul AI4PSInSAR va fi transformat dintr-un container standalone într-un \textbf{microserviciu dinamic orchestrat}, integrat complet în platforma de management. Această tranziție va permite configurarea interactivă, monitorizare în timp real și vizualizarea rezultatelor direct din interfața web.
+
+Figura~\ref{fig:ai4psinsar-integrated} prezintă arhitectura sistemului după integrare, evidențiind fluxul de date între platforma de management și modulul de detecție.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+    node distance=3.5cm,
+    every node/.style={font=\small},
+    platform/.style={rectangle, draw=green!70, fill=green!15, text width=3cm, align=center, 
+                     minimum height=1.3cm, rounded corners=3pt, line width=1pt,
+                     drop shadow={opacity=0.3, shadow xshift=2pt, shadow yshift=-2pt}},
+    ai/.style={rectangle, draw=orange!70, fill=orange!15, text width=3cm, align=center, 
+               minimum height=1.3cm, rounded corners=3pt, line width=1pt,
+               drop shadow={opacity=0.3, shadow xshift=2pt, shadow yshift=-2pt}},
+    arrow/.style={->, >=stealth, line width=1.2pt},
+    arrowlabel/.style={font=\footnotesize, fill=white, inner sep=2pt, rounded corners}
+]
+% Stiva Platformă (stânga)
+\node[platform] (ui) {\textbf{Dashboard}\\Interfață User};
+\node[platform, below of=ui, node distance=2.5cm] (be) {\textbf{Backend API}\\Express + JWT};
+\node[platform, below of=be, node distance=2.5cm] (db) {\textbf{MongoDB}\\Bază de Date};
+% Stiva Modul AI (dreapta)
+\node[ai, right of=ui, node distance=8cm] (api_ai) {\textbf{REST API}\\Docker Container};
+\node[ai, below of=api_ai, node distance=2.5cm] (proc) {\textbf{Pipeline}\\NLP + GPT-4};
+\node[ai, below of=proc, node distance=2.5cm] (store) {\textbf{Storage}\\CSV Results};
+% Fluxuri principale (numerotate)
+\draw[arrow, blue!70] (ui) -- node[arrowlabel, above] {\textcircled{\scriptsize 1} Configurare parametri} (be);
+\draw[arrow, purple!70] (be) -- node[arrowlabel, above] {\textcircled{\scriptsize 2} POST /api/ai/start} (api_ai);
+\draw[arrow, orange!70] (api_ai) -- node[arrowlabel, right] {\textcircled{\scriptsize 3} Pornire procesare} (proc);
+\draw[arrow, orange!70] (proc) -- node[arrowlabel, right] {\textcircled{\scriptsize 4} Salvare rezultate} (store);
+\draw[arrow, red!70] (store) to[bend right=15] node[arrowlabel, below, pos=0.3] {\textcircled{\scriptsize 5} Webhook completare} (be);
+\draw[arrow, green!70] (be) -- node[arrowlabel, left] {\textcircled{\scriptsize 6} Import + geocoding} (db);
+\draw[arrow, blue!70] (db) to[bend left=15] node[arrowlabel, above, pos=0.7] {\textcircled{\scriptsize 7} Notificare WebSocket} (ui);
+% Etichete grupuri (cu fundal)
+\node[fill=green!20, rounded corners, font=\bfseries, inner sep=4pt] at (-1, 2.3) {PLATFORMA DE MANAGEMENT};
+\node[fill=orange!20, rounded corners, font=\bfseries, inner sep=4pt] at (6.5, 2.3) {MODUL AI4PSInSAR};
+% Borduri grupuri
+\draw[green!50, dashed, line width=1.5pt, rounded corners] (-2.2, 2) rectangle (1.2, -5.5);
+\draw[orange!50, dashed, line width=1.5pt, rounded corners] (5.3, 2) rectangle (8.7, -5.5);
+\end{tikzpicture}
+\caption{Arhitectura integrată a sistemului de detecție cu fluxuri numerotate}
+\label{fig:ai4psinsar-integrated}
+\end{figure}
+
+
+Integrarea cu platforma va aduce următoarele îmbunătățiri majore:
+\begin{itemize}
+    \item \textbf{Configurare Dinamică din Interfață}
+    Utilizatorii vor putea crea și configura proiecte de detecție prin formulare interactive din dashboard, fără a interacționa cu linia de comandă. Tabelul~\ref{tab:config-params} prezintă parametrii configurabili.
+        \begin{table}[ht]
+        \centering
+        \small
+        \begin{tabular}{|l|p{5.5cm}|l|}
+        \hline
+        \textbf{Parametru} & \textbf{Descriere} & \textbf{Exemplu} \\ \hline
+        NEWS\_API\_KEY & Cheie API pentru NewsAPI.org & \texttt{abc123...} \\ \hline
+        OPENAI\_API\_KEY & Cheie API pentru OpenAI GPT & \texttt{sk-proj-...} \\ \hline
+        LANGUAGE & Limba de procesare & Romanian / English \\ \hline
+        KEYWORDS\_FILE & Fișier cu cuvinte cheie custom & Upload \texttt{.txt} \\ \hline
+        MAX\_ARTICLES & Limita de articole de procesat & 200 (default) \\ \hline
+        DATE\_RANGE & Interval temporal de căutare & Ultimele 7 zile \\ \hline
+        \end{tabular}
+        \caption{Parametri configurabili pentru modulul AI4PSInSAR}
+        \label{tab:config-params}
+        \end{table}
+
+    \item \textbf{Orchestrare Automată}
+        Backend-ul va gestiona automat ciclul de viață al containerului AI4PSInSAR:
+        \begin{enumerate}
+            \item \textbf{Creare container}: Generare automată cu variabile de mediu personalizate
+            \item \textbf{Monitorizare}: Tracking progres prin analiza log-urilor containerului
+            \item \textbf{Importare rezultate}: Parsare automată CSV și stocare în MongoDB
+            \item \textbf{Notificare}: Alert în timp real către utilizator prin WebSocket
+            \item \textbf{Cleanup}: Oprire și ștergere container după finalizare
+        \end{enumerate}
+            
+    \item \textbf{Integrare Bază de Date}
+        Rezultatele CSV vor fi importate automat în MongoDB cu următoarea schemă enriched:
+        \begin{lstlisting}[language=JavaScript, caption={Schema MongoDB pentru rezultate AI}, label={lst:mongodb-schema}, basicstyle=\tiny\ttfamily, allign=center]
+        {
+          projectId: ObjectId,
+          userId: ObjectId,
+          timestamp: ISODate("2025-01-12T14:30:00Z"),
+          articles: [
+            {
+              url: String,
+              isRelevant: Boolean,
+              location: {
+                continent: String,
+                country: String,
+                county: String,
+                coordinates: [lng, lat]  // din geocoding
+              },
+              entities: {
+                gpe: [String],
+                loc: [String],
+                dates: [String],
+                events: [String]
+              }
+            }
+          ],
+          status: "completed" | "processing" | "failed"
+        }
+        \end{lstlisting}
+
+        \item \textbf{Vizualizare Interactivă}
+        Dashboard-ul va include componente noi pentru explorarea rezultatelor:
+        \begin{itemize}
+            \item \textbf{Hartă geografică}: Vizualizare evenimente pe hartă interactivă (Leaflet/Mapbox)
+            \item \textbf{Timeline}: Distribuție temporală a dezastrelor detectate
+            \item \textbf{Statistici}: Top locații, tipuri evenimente, surse de știri
+            \item \textbf{Export}: Descărcare rezultate în CSV, JSON sau PDF
+        \end{itemize}
+\end{itemize}
+
+
+\section{Concluzii și Perspective}
+\label{sec:concluzii}
+
+\hspace{1em} Lucrarea de față a prezentat dezvoltarea unei platforme integrate pentru detecția și monitorizarea dezastrelor naturale și antropogene din surse informaționale online, abordând provocările inerente ale procesării fluxurilor de date eterogene în timp real. Sistemul propus îmbină tehnici avansate de procesare a limbajului natural cu o arhitectură de microservicii containerizată, oferind o soluție scalabilă și modulară pentru identificarea timpurie a evenimentelor critice.
+
+Din perspectiva arhitecturală și de rețelistică, platforma demonstrează aplicarea practică a principiilor de izolare la nivel de rețea, managementul securizat al comunicațiilor prin mecanisme de criptare și autentificare robustă, și orchestrarea eficientă a containerelor Docker pentru gestionarea ciclului de viață al componentelor distribuite. Implementarea rețelei virtuale prin driver-ul bridge asigură segregarea traficului și eliminarea expunerilor directe către exterior, în timp ce utilizarea Nginx ca reverse proxy centralizează controlul intrărilor și optimizează distribuirea resurselor.
+
+Sistemul de detecție automată validează capacitatea infrastructurilor bazate pe învățare automată de a extrage informații structurate din conținut nestructurat, facilitând identificarea locațiilor geografice, intervalelor temporale și tipologiilor de evenimente. Integrarea cu servicii externe (NewsAPI, OpenAI GPT, imagistică satelitară) evidențiază potențialul arhitecturilor orientate pe servicii în contextul analizei datelor multisursă.
+
+Modelul de date orientat pe documente (MongoDB) s-a dovedit adecvat pentru flexibilitatea schemelor și scalabilitatea orizontală necesară în scenarii cu volume mari de metadata asociate containerelor și configurațiilor utilizatorilor. Fluxurile informaționale implementate asigură trasabilitate completă prin mecanisme de audit logging și validare multistrat, menținând integritatea datelor pe întreaga cale de procesare.
+
+\subsection{Rezultate și perspective de dezvoltare}
+ \hspace{1em} Principalele realizări ale acestei lucrări includ: 
+ \begin{enumerate}
+     \item dezvoltarea unei arhitecturi hibride care integrează o platformă generică de management cu module specializate de detecție AI
+     \item implementarea unei strategii de securitate stratificată (defense-in-depth) la niveluri de rețea, transport și aplicație
+     \item validarea mecanismelor de corelație multisursă pentru reducerea alarmelor false
+     \item demonstrarea fezabilității orchestrării containerizate a sistemelor eterogene de procesare
+ \end{enumerate}
+
+ Perspective viitoare de dezvoltare includ migrarea către orchestratoare de nivel enterprise (Kubernetes) pentru scalare automată, integrarea cu platforme de procesare distribuită în timp real (Apache Kafka, Apache Flink) pentru reducerea latenței de alertare, și fine-tuning al modelelor NLP pe corpusuri specializate de știri despre calamități. Extinderea ecosistemului de colectare cu surse IoT și imagistică satelitară High-Resolution, implementarea certificării mTLS pentru comunicații inter-servicii și dezvoltarea capacităților de analiză predictivă bazate pe Machine Learning vor transforma platforma dintr-un sistem de detecție reactiv într-o infrastructură proactivă de anticipare și management al riscurilor, contribuind semnificativ la îmbunătățirea timpului de răspuns în situații de urgență.
+
+% ============================================================================
+% BIBLIOGRAPHY
+% ============================================================================
+
+\newpage
+\phantomsection
+\addcontentsline{toc}{section}{Bibliografie}
+\begin{thebibliography}{9}
+
+
+
+
+\end{thebibliography}
+
+% ============================================================================
+% APPENDICES (optional)
+% ============================================================================
+
+% \appendix
+% \section{Anexe}
+% \label{sec:anexe}
+
+% Conținut anexe aici...
+
+\end{document}

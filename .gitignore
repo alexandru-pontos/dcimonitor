@@ -1,0 +1,36 @@
+# Python / Django
+venv/
+__pycache__/
+*.pyc
+db.sqlite3
+.env
+media/
+staticfiles/
+
+# Node / React
+node_modules/
+dist/
+dist-ssr/
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+*.xdv
+*.pdf
+
+# IDEs and OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker
+postgres_data/

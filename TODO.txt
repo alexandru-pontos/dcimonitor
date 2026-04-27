@@ -1,0 +1,32 @@
+Racks:
+- [no] View multiple racks on one screen (and scroll through them) like in RackTables.
+    - [no] Alternatively, implement a "map" of the server room like in OpenDCIM.
+- [X] Remove complicated resizing logic; ask users to manage devices in case of conflicts, before resizing.
+- After device inventorying is set up, add quick statistic about nominal power draw and some historical data. (see OpenDCIM)
+    - Also implement visual repr. of cable connections.
+- For device connections: reduce clutter for switches and devices with many connections.
+- List off U levels where device could fit
+
+Devices:
+- [x] When adding from Rack view, ask for basic device info like in RackTables.
+- [x]When adding/editing device in Device view, offer advanced info like in OpenDCIM.
+- [x] Separate devices from the Rack view so they can exist outside of it.
+    - [?] Implement separate "storage rooms" depending on location instead of one common pool.
+- [no] Allow picture upload for the device to help with identification (requested).
+- Add (or "define") connection ports separately from device creation; offer relevant data for quick ID through the OS (MAC address, interface name when running commands)
+- Add another generic data section for sub-devices (HDDs, GPUs etc.) with templates for each type.
+    - OR for a generic interface, allow users to define custom rows for data.
+    - Allow defining TEMPLATES for Sub-Devices
+
+VLAN:
+- Implement more or less same feature set as RackTables.
+    - Unlike RackTables, give users a VLAN list.
+    - Offer contextual information depending on: router/switch device is connected to (?), which IP addresses are already used.
+
+Monitoring:
+- Once interface is finalized for IM.
+- Either add it as a separate tab, or find way to integrate into existing UI.
+- Define scope
+
+Extra:
+- PDF export of inventory per: rack, location; depending on device type etc.
