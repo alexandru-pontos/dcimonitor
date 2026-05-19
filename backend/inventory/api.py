@@ -120,11 +120,16 @@ def get_stats(request, location_id: int = None):
         
     total_racks = racks_qs.count()
     
-    # Active devices in the filtered racks
-    active_devices = Device.objects.filter(
-        rack__in=racks_qs, 
-        status='active'
-    ).count()
+    # Active devices in the filtered racks or at the location
+    if location_id:
+        active_devices = Device.objects.filter(
+            location_id=location_id,
+            status='active'
+        ).count()
+    else:
+        active_devices = Device.objects.filter(
+            status='active'
+        ).count()
     
     return {
         "total_racks": total_racks,
@@ -133,8 +138,11 @@ def get_stats(request, location_id: int = None):
 
 # --- Devices ---
 @router.get("/devices", response=List[DeviceSchema])
-def list_all_devices(request):
-    return Device.objects.all()
+def list_all_devices(request, location_id: int = None):
+    qs = Device.objects.all()
+    if location_id:
+        qs = qs.filter(location_id=location_id)
+    return qs
 
 @router.get("/racks/{rack_id}/devices", response=List[DeviceSchema])
 def list_rack_devices(request, rack_id: int):
@@ -144,10 +152,15 @@ def list_rack_devices(request, rack_id: int):
 def create_device(request, payload: DeviceCreateSchema):
     data = payload.dict()
     rack_id = data.pop('rack_id', None)
+    location_id = data.pop('location_id')
     
+    location = get_object_or_404(Location, id=location_id)
     rack = None
     if rack_id is not None:
         rack = get_object_or_404(Rack, id=rack_id)
+        if rack.location_id != location.id:
+            from ninja.errors import HttpError
+            raise HttpError(400, "Device location must match Rack location.")
     
     # Validation: Check for intersection only if assigned to a rack
     if rack and data.get('position_u'):
@@ -168,7 +181,7 @@ def create_device(request, payload: DeviceCreateSchema):
                  from ninja.errors import HttpError
                  raise HttpError(409, f"Overlap detected with device '{d.name}' at U{d.position_u}.")
 
-    device = Device.objects.create(rack=rack, **data)
+    device = Device.objects.create(location=location, rack=rack, **data)
     return device
 
 # Update Device Endpoint
@@ -179,16 +192,28 @@ def update_device(request, device_id: int, payload: DeviceUpdateSchema):
     print(f"DEBUG update_device: {data}")
     
     # Handle Relations
+    if 'location_id' in data:
+        location_id = data.pop('location_id')
+        if location_id is not None:
+            device.location = get_object_or_404(Location, id=location_id)
+
     if 'rack_id' in data:
         rack_id = data.pop('rack_id')
         if rack_id is None:
             device.rack = None # Decommission / Unmount
         else:
-            device.rack = get_object_or_404(Rack, id=rack_id)
+            rack = get_object_or_404(Rack, id=rack_id)
+            device.rack = rack
+            # Sync location
+            device.location = rack.location
 
     # Update simple fields
     for attr, value in data.items():
         setattr(device, attr, value)
+        
+    # Ensure rack location matches device location
+    if device.rack and device.location_id != device.rack.location_id:
+        device.location = device.rack.location
 
     # Validation: If moving/resizing on a rack
     if device.rack:

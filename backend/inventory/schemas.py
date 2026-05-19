@@ -54,9 +54,10 @@ class DeviceSchema(ModelSchema):
     tags: list[str] = []
     class Meta:
         model = Device
-        fields = ['id', 'name', 'label', 'asset_tag', 'rack', 'position_u', 'height_u', 'device_type', 'status', 'specs', 'created_at', 'updated_at', 'mounting_configuration', 'tags']
+        fields = ['id', 'name', 'label', 'asset_tag', 'location', 'rack', 'position_u', 'height_u', 'device_type', 'status', 'specs', 'created_at', 'updated_at', 'mounting_configuration', 'tags']
 
 class DeviceCreateSchema(ModelSchema):
+    location_id: int
     rack_id: Optional[int] = None
     position_u: Optional[int] = None
     mounting_configuration: list[str] = ['middle'] # Default to middle
@@ -70,6 +71,7 @@ class DeviceUpdateSchema(Schema):
     name: str = None
     label: Optional[str] = None
     asset_tag: Optional[str] = None
+    location_id: Optional[int] = None
     rack_id: Optional[int] = None
     position_u: Optional[int] = None
     height_u: int = None

@@ -33,8 +33,15 @@ export default function EditDeviceModal({ isOpen, onClose, device, rackHeight, o
     const [mountingConfig, setMountingConfig] = useState<string[]>(device.mounting_configuration || []);
 
     // Positioning
+    const [locationId, setLocationId] = useState<number>(device.location);
     const [rackId, setRackId] = useState<number | null>(device.rack || null);
     const [positionU, setPositionU] = useState<number | null>(device.position_u || null);
+
+    const { data: locations } = useQuery({
+        queryKey: ['locations'],
+        queryFn: inventoryService.getLocations,
+        enabled: isOpen,
+    });
 
     // Extra fields
     const [tagsInput, setTagsInput] = useState(device.tags?.join(', ') || '');
@@ -68,6 +75,7 @@ export default function EditDeviceModal({ isOpen, onClose, device, rackHeight, o
             setStatus(device.status);
             setMountingConfig(device.mounting_configuration || []);
             
+            setLocationId(device.location);
             setRackId(device.rack || null);
             setPositionU(device.position_u || null);
 
@@ -143,6 +151,7 @@ export default function EditDeviceModal({ isOpen, onClose, device, rackHeight, o
 
         updateMutation.mutate({
             name,
+            location: locationId,
             label: label || null,
             asset_tag: assetTag || null,
             rack: rackId, // Pass updated rackId
@@ -260,20 +269,40 @@ export default function EditDeviceModal({ isOpen, onClose, device, rackHeight, o
                                 </div>
                             </div>
 
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mounting Depth *</label>
-                                <div className="flex gap-4">
-                                    {['back', 'middle', 'front'].map((col) => (
-                                        <label key={col} className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={mountingConfig.includes(col)}
-                                                onChange={() => handleConfigChange(col)}
-                                                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
-                                            />
-                                            <span className="text-sm capitalize text-gray-700 dark:text-gray-300">{col}</span>
-                                        </label>
-                                    ))}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mounting Depth *</label>
+                                    <div className="flex gap-4 mt-2">
+                                        {['back', 'middle', 'front'].map((col) => (
+                                            <label key={col} className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={mountingConfig.includes(col)}
+                                                    onChange={() => handleConfigChange(col)}
+                                                    className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                                                />
+                                                <span className="text-sm capitalize text-gray-700 dark:text-gray-300">{col}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location *</label>
+                                    <select
+                                        required
+                                        value={locationId}
+                                        onChange={(e) => {
+                                            setLocationId(Number(e.target.value));
+                                            setRackId(null);
+                                            setPositionU(null);
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    >
+                                        <option value="" disabled>Select Location</option>
+                                        {locations?.map(loc => (
+                                            <option key={loc.id} value={loc.id}>{loc.name}</option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
                         </section>
@@ -503,6 +532,7 @@ export default function EditDeviceModal({ isOpen, onClose, device, rackHeight, o
                 onClose={() => setIsAssignModalOpen(false)}
                 onConfirm={handleAssignConfirm}
                 deviceHeightU={heightU}
+                fixedLocationId={locationId}
             />
         </Modal>
     );

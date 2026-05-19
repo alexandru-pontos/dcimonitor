@@ -3,34 +3,37 @@ import Modal from './Modal';
 import { Search, FilterX, Monitor } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { inventoryService } from '../services/inventory';
+import MultiSelect from './MultiSelect';
 
 interface AssignExistingDeviceModalProps {
     isOpen: boolean;
     onClose: () => void;
     onAssignDevice: (deviceId: number) => void;
     isAssigning: boolean;
+    rackLocationId: number;
 }
 
 export default function AssignExistingDeviceModal({
     isOpen,
     onClose,
     onAssignDevice,
-    isAssigning
+    isAssigning,
+    rackLocationId
 }: AssignExistingDeviceModalProps) {
     const { data: devices, isLoading } = useQuery({
-        queryKey: ['all_devices'],
-        queryFn: inventoryService.getAllDevices,
-        enabled: isOpen,
+        queryKey: ['all_devices', rackLocationId],
+        queryFn: () => inventoryService.getAllDevices(rackLocationId),
+        enabled: isOpen && !!rackLocationId,
     });
 
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterType, setFilterType] = useState('');
-    const [filterStatus, setFilterStatus] = useState('');
+    const [filterType, setFilterType] = useState<string[]>([]);
+    const [filterStatus, setFilterStatus] = useState<string[]>([]);
 
     const clearFilters = () => {
         setSearchQuery('');
-        setFilterType('');
-        setFilterStatus('');
+        setFilterType([]);
+        setFilterStatus([]);
     };
 
     const unassignedDevices = useMemo(() => {
@@ -41,17 +44,17 @@ export default function AssignExistingDeviceModal({
             const query = searchQuery.toLowerCase();
             result = result.filter(d => d.name.toLowerCase().includes(query));
         }
-        if (filterType !== '') {
-            result = result.filter(d => d.device_type === filterType);
+        if (filterType.length > 0) {
+            result = result.filter(d => filterType.includes(d.device_type));
         }
-        if (filterStatus !== '') {
-            result = result.filter(d => d.status === filterStatus);
+        if (filterStatus.length > 0) {
+            result = result.filter(d => filterStatus.includes(d.status));
         }
 
         return result.sort((a, b) => a.name.localeCompare(b.name));
     }, [devices, searchQuery, filterType, filterStatus]);
 
-    const hasActiveFilters = searchQuery !== '' || filterType !== '' || filterStatus !== '';
+    const hasActiveFilters = searchQuery !== '' || filterType.length > 0 || filterStatus.length > 0;
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Assign Existing Device" size="xl">
@@ -80,33 +83,33 @@ export default function AssignExistingDeviceModal({
                             {/* Filters */}
                             <div className="flex flex-wrap sm:flex-nowrap gap-4 w-full md:w-auto">
                                 <div className="flex-1 sm:w-32 shrink-0">
-                                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Type</label>
-                                    <select
-                                        value={filterType}
-                                        onChange={(e) => setFilterType(e.target.value)}
-                                        className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 dark:text-gray-200 transition-colors appearance-none"
-                                    >
-                                        <option value="">All Types</option>
-                                        <option value="server">Server</option>
-                                        <option value="switch">Switch</option>
-                                        <option value="router">Router</option>
-                                        <option value="pdu">PDU</option>
-                                        <option value="other">Other</option>
-                                    </select>
+                                    <MultiSelect
+                                        label="Type"
+                                        placeholder="All Types"
+                                        selectedValues={filterType}
+                                        onChange={setFilterType}
+                                        options={[
+                                            { value: 'server', label: 'Server' },
+                                            { value: 'switch', label: 'Switch' },
+                                            { value: 'router', label: 'Router' },
+                                            { value: 'pdu', label: 'PDU' },
+                                            { value: 'other', label: 'Other' }
+                                        ]}
+                                    />
                                 </div>
                                 <div className="flex-1 sm:w-32 shrink-0">
-                                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status</label>
-                                    <select
-                                        value={filterStatus}
-                                        onChange={(e) => setFilterStatus(e.target.value)}
-                                        className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 dark:text-gray-200 transition-colors appearance-none"
-                                    >
-                                        <option value="">All Statuses</option>
-                                        <option value="active">Active</option>
-                                        <option value="maintenance">Maintenance</option>
-                                        <option value="offline">Offline</option>
-                                        <option value="decommissioned">Decommissioned</option>
-                                    </select>
+                                    <MultiSelect
+                                        label="Status"
+                                        placeholder="All Statuses"
+                                        selectedValues={filterStatus}
+                                        onChange={setFilterStatus}
+                                        options={[
+                                            { value: 'active', label: 'Active' },
+                                            { value: 'maintenance', label: 'Maintenance' },
+                                            { value: 'offline', label: 'Offline' },
+                                            { value: 'decommissioned', label: 'Decommissioned' }
+                                        ]}
+                                    />
                                 </div>
                                 
                                 <div className="flex items-end">

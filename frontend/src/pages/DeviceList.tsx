@@ -1,15 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 import { inventoryService } from '../services/inventory';
-import { Plus, Monitor, Server, ArrowUpDown, ArrowUp, ArrowDown, Search, FilterX } from 'lucide-react';
+import { Plus, Monitor, Server, ArrowUpDown, ArrowUp, ArrowDown, Search, FilterX, Pencil } from 'lucide-react';
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import AddDeviceModal from '../components/AddDeviceModal';
 import EditDeviceModal from '../components/EditDeviceModal';
+import MultiSelect from '../components/MultiSelect';
 
 type SortKey = 'name' | 'device_type' | 'rack' | 'status';
 
 export default function DeviceList() {
     const navigate = useNavigate();
+    const { selectedLocationId } = useOutletContext<{ selectedLocationId: number | null }>();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingDeviceId, setEditingDeviceId] = useState<number | null>(null);
 
@@ -21,18 +23,18 @@ export default function DeviceList() {
 
     // Filtering
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterType, setFilterType] = useState('');
-    const [filterStatus, setFilterStatus] = useState('');
-    const [filterRack, setFilterRack] = useState('');
+    const [filterType, setFilterType] = useState<string[]>([]);
+    const [filterStatus, setFilterStatus] = useState<string[]>([]);
+    const [filterRack, setFilterRack] = useState<string[]>([]);
 
     const { data: devices, isLoading: isLoadingDevices, refetch } = useQuery({
-        queryKey: ['all_devices'],
-        queryFn: inventoryService.getAllDevices,
+        queryKey: ['all_devices', selectedLocationId],
+        queryFn: () => inventoryService.getAllDevices(selectedLocationId),
     });
 
     const { data: racks, isLoading: isLoadingRacks } = useQuery({
-        queryKey: ['all_racks'],
-        queryFn: () => inventoryService.getRacks(),
+        queryKey: ['all_racks', selectedLocationId],
+        queryFn: () => inventoryService.getRacks(selectedLocationId),
     });
 
     const isLoading = isLoadingDevices || isLoadingRacks;
@@ -48,9 +50,9 @@ export default function DeviceList() {
 
     const clearFilters = () => {
         setSearchQuery('');
-        setFilterType('');
-        setFilterStatus('');
-        setFilterRack('');
+        setFilterType([]);
+        setFilterStatus([]);
+        setFilterRack([]);
     };
 
     const filteredAndSortedDevices = useMemo(() => {
@@ -63,18 +65,18 @@ export default function DeviceList() {
             const query = searchQuery.toLowerCase();
             result = result.filter(d => d.name.toLowerCase().includes(query));
         }
-        if (filterType !== '') {
-            result = result.filter(d => d.device_type === filterType);
+        if (filterType.length > 0) {
+            result = result.filter(d => filterType.includes(d.device_type));
         }
-        if (filterStatus !== '') {
-            result = result.filter(d => d.status === filterStatus);
+        if (filterStatus.length > 0) {
+            result = result.filter(d => filterStatus.includes(d.status));
         }
-        if (filterRack !== '') {
-            if (filterRack === 'unassigned') {
-                result = result.filter(d => !d.rack);
-            } else {
-                result = result.filter(d => d.rack === parseInt(filterRack));
-            }
+        if (filterRack.length > 0) {
+            result = result.filter(d => {
+                if (filterRack.includes('unassigned') && !d.rack) return true;
+                if (d.rack && filterRack.includes(d.rack.toString())) return true;
+                return false;
+            });
         }
 
         // Apply sorting
@@ -112,7 +114,7 @@ export default function DeviceList() {
         return <div className="text-gray-500 dark:text-gray-400">Loading devices...</div>;
     }
 
-    const hasActiveFilters = searchQuery !== '' || filterType !== '' || filterStatus !== '' || filterRack !== '';
+    const hasActiveFilters = searchQuery !== '' || filterType.length > 0 || filterStatus.length > 0 || filterRack.length > 0;
 
     return (
         <div>
@@ -151,49 +153,48 @@ export default function DeviceList() {
                     {/* Filters */}
                     <div className="flex flex-wrap sm:flex-nowrap gap-4 w-full lg:w-auto">
                         <div className="flex-1 sm:w-40 shrink-0">
-                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Type</label>
-                            <select
-                                value={filterType}
-                                onChange={(e) => setFilterType(e.target.value)}
-                                className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 dark:text-gray-200 transition-colors appearance-none"
-                            >
-                                <option value="">All Types</option>
-                                <option value="server">Server</option>
-                                <option value="switch">Switch</option>
-                                <option value="router">Router</option>
-                                <option value="pdu">PDU</option>
-                                <option value="other">Other</option>
-                            </select>
+                            <MultiSelect
+                                label="Type"
+                                placeholder="All Types"
+                                selectedValues={filterType}
+                                onChange={setFilterType}
+                                options={[
+                                    { value: 'server', label: 'Server' },
+                                    { value: 'switch', label: 'Switch' },
+                                    { value: 'router', label: 'Router' },
+                                    { value: 'pdu', label: 'PDU' },
+                                    { value: 'other', label: 'Other' }
+                                ]}
+                            />
                         </div>
                         <div className="flex-1 sm:w-40 shrink-0">
-                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Status</label>
-                            <select
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                                className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 dark:text-gray-200 transition-colors appearance-none"
-                            >
-                                <option value="">All Statuses</option>
-                                <option value="active">Active</option>
-                                <option value="maintenance">Maintenance</option>
-                                <option value="offline">Offline</option>
-                                <option value="decommissioned">Decommissioned</option>
-                            </select>
+                            <MultiSelect
+                                label="Status"
+                                placeholder="All Statuses"
+                                selectedValues={filterStatus}
+                                onChange={setFilterStatus}
+                                options={[
+                                    { value: 'active', label: 'Active' },
+                                    { value: 'maintenance', label: 'Maintenance' },
+                                    { value: 'offline', label: 'Offline' },
+                                    { value: 'decommissioned', label: 'Decommissioned' }
+                                ]}
+                            />
                         </div>
                         <div className="flex-1 sm:w-56 shrink-0">
-                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Rack Location</label>
-                            <select
-                                value={filterRack}
-                                onChange={(e) => setFilterRack(e.target.value)}
-                                className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 dark:text-gray-200 transition-colors appearance-none"
-                            >
-                                <option value="">All Locations</option>
-                                <option value="unassigned">Unassigned (Storage)</option>
-                                {racks?.map(rack => (
-                                    <option key={rack.id} value={rack.id!.toString()}>
-                                        {rack.name} ({rack.location.name})
-                                    </option>
-                                ))}
-                            </select>
+                            <MultiSelect
+                                label="Rack Location"
+                                placeholder="All Locations"
+                                selectedValues={filterRack}
+                                onChange={setFilterRack}
+                                options={[
+                                    { value: 'unassigned', label: 'Unassigned (Storage)' },
+                                    ...(racks?.map(rack => ({
+                                        value: rack.id!.toString(),
+                                        label: `${rack.name} (${rack.location.name})`
+                                    })) || [])
+                                ]}
+                            />
                         </div>
                         
                         <div className="flex items-end">
@@ -332,9 +333,10 @@ export default function DeviceList() {
                                         <td className="px-6 py-4 text-right">
                                             <button
                                                 onClick={() => setEditingDeviceId(device.id)}
-                                                className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium text-sm transition-colors"
+                                                className="p-2 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                                                title="Edit Device"
                                             >
-                                                Edit
+                                                <Pencil size={18} />
                                             </button>
                                         </td>
                                     </tr>

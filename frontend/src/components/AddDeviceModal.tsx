@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { inventoryService } from '../services/inventory';
 import type { Device, DeviceCreate } from '../services/inventory';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useToast } from '../context/ToastContext';
 import AssignToRackModal from './AssignToRackModal';
 
@@ -21,6 +21,18 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
 
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
 
+    const { data: locations } = useQuery({
+        queryKey: ['locations'],
+        queryFn: inventoryService.getLocations,
+        enabled: isOpen,
+    });
+
+    const { data: rackContext } = useQuery({
+        queryKey: ['rack', rackId],
+        queryFn: () => inventoryService.getRack(rackId!),
+        enabled: isOpen && !!rackId,
+    });
+
     // Basic fields
     const [name, setName] = useState('');
     const [label, setLabel] = useState('');
@@ -31,6 +43,7 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
     const [mountingConfig, setMountingConfig] = useState<string[]>(['middle']);
 
     // Positioning
+    const [locationId, setLocationId] = useState<number | ''>('');
     const [assignedRackId, setAssignedRackId] = useState<number | null>(rackId);
     const [positionU, setPositionU] = useState<number | null>(initialPosition || 1);
 
@@ -67,8 +80,11 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
         if (isOpen) {
             setAssignedRackId(rackId);
             setPositionU(initialPosition || 1);
+            if (rackContext) {
+                setLocationId(rackContext.location.id);
+            }
         }
-    }, [isOpen, rackId, initialPosition]);
+    }, [isOpen, rackId, initialPosition, rackContext]);
 
     const resetForm = () => {
         setName('');
@@ -78,6 +94,7 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
         setType('server');
         setStatus('active');
         setMountingConfig(['middle']);
+        setLocationId('');
         setAssignedRackId(rackId);
         setPositionU(initialPosition || 1);
         setTagsInput('');
@@ -109,6 +126,7 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
 
         const payload: DeviceCreate = {
             name,
+            location: Number(locationId),
             label: label || null,
             asset_tag: assetTag || null,
             position_u: assignedRackId ? positionU : null,
@@ -222,20 +240,41 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
                         </div>
                     </div>
 
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mounting Depth *</label>
-                        <div className="flex gap-4">
-                            {['back', 'middle', 'front'].map((col) => (
-                                <label key={col} className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={mountingConfig.includes(col)}
-                                        onChange={() => handleConfigChange(col)}
-                                        className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
-                                    />
-                                    <span className="text-sm capitalize text-gray-700 dark:text-gray-300">{col}</span>
-                                </label>
-                            ))}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mounting Depth *</label>
+                            <div className="flex gap-4 mt-2">
+                                {['back', 'middle', 'front'].map((col) => (
+                                    <label key={col} className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={mountingConfig.includes(col)}
+                                            onChange={() => handleConfigChange(col)}
+                                            className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                                        />
+                                        <span className="text-sm capitalize text-gray-700 dark:text-gray-300">{col}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location *</label>
+                            <select
+                                required
+                                value={locationId}
+                                onChange={(e) => {
+                                    setLocationId(Number(e.target.value));
+                                    setAssignedRackId(null);
+                                    setPositionU(null);
+                                }}
+                                disabled={!!rackId} // Disable if adding from a specific rack
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
+                            >
+                                <option value="" disabled>Select Location</option>
+                                {locations?.map(loc => (
+                                    <option key={loc.id} value={loc.id}>{loc.name}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
                 </section>
@@ -286,10 +325,12 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
                             <button
                                 type="button"
                                 onClick={() => setIsAssignModalOpen(true)}
-                                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                                disabled={!locationId}
+                                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50"
                             >
                                 Assign to rack
                             </button>
+                            {!locationId && <p className="text-xs text-red-500 mt-2">Select a location first.</p>}
                         </div>
                     )}
                 </section>
@@ -408,6 +449,7 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
                 onClose={() => setIsAssignModalOpen(false)}
                 onConfirm={handleAssignConfirm}
                 deviceHeightU={heightU}
+                fixedLocationId={typeof locationId === 'number' ? locationId : undefined}
             />
         </Modal>
     );

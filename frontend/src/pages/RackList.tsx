@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { inventoryService } from '../services/inventory';
+import { inventoryService, type Device } from '../services/inventory';
 import { Plus, Server, Search } from 'lucide-react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { useState, useMemo } from 'react';
@@ -16,8 +16,8 @@ export default function RackList() {
     });
 
     const { data: allDevices, isLoading: isLoadingDevices } = useQuery({
-        queryKey: ['all_devices'],
-        queryFn: inventoryService.getAllDevices,
+        queryKey: ['all_devices', selectedLocationId],
+        queryFn: () => inventoryService.getAllDevices(selectedLocationId),
     });
 
     const isLoading = isLoadingRacks || isLoadingDevices;
@@ -89,10 +89,10 @@ export default function RackList() {
                         <div className="border-t border-gray-100 dark:border-zinc-800 pt-4 flex items-center justify-between text-sm">
                             <div className="flex items-center gap-2">
                                 {(() => {
-                                    const rackDevices = allDevices?.filter(d => d.rack === rack.id) || [];
-                                    const activeCount = rackDevices.filter(d => d.status === 'active').length;
-                                    const maintenanceCount = rackDevices.filter(d => d.status === 'maintenance').length;
-                                    const offlineCount = rackDevices.filter(d => d.status === 'offline').length;
+                                    const rackDevices = allDevices?.filter((d: Device) => d.rack === rack.id) || [];
+                                    const activeCount = rackDevices.filter((d: Device) => d.status === 'active').length;
+                                    const maintenanceCount = rackDevices.filter((d: Device) => d.status === 'maintenance').length;
+                                    const offlineCount = rackDevices.filter((d: Device) => d.status === 'offline').length;
                                     const otherCount = rackDevices.length - (activeCount + maintenanceCount + offlineCount);
                                     
                                     if (rackDevices.length === 0) {

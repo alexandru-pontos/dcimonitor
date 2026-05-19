@@ -209,6 +209,7 @@ export default function RackView() {
                 onClose={handleModalClose}
                 onAssignDevice={(deviceId) => assignExistingDeviceMutation.mutate(deviceId)}
                 isAssigning={assignExistingDeviceMutation.isPending}
+                rackLocationId={rack.location.id}
             />
 
             <AddDeviceModal

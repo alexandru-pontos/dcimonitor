@@ -3,9 +3,11 @@ Racks:
     - [no] Alternatively, implement a "map" of the server room like in OpenDCIM.
 - [X] Remove complicated resizing logic; ask users to manage devices in case of conflicts, before resizing.
 - After device inventorying is set up, add quick statistic about nominal power draw and some historical data. (see OpenDCIM)
-    - Also implement visual repr. of cable connections.
-- For device connections: reduce clutter for switches and devices with many connections.
-- List off U levels where device could fit
+- Implement visual repr. of cable connections.
+    - Consolidate multiple cables into one when they all connect the same devices. Clicking "zooms in".
+    - For individual cables: show IPs and ports of both ends, cable type and length
+        - "Sync" connections between devices? Esp. for Port and IP address display.
+    - On devices: show amount of ports, how many are occupied, or if none are defined.
 
 Devices:
 - [x] When adding from Rack view, ask for basic device info like in RackTables.
@@ -13,20 +15,35 @@ Devices:
 - [x] Separate devices from the Rack view so they can exist outside of it.
     - [?] Implement separate "storage rooms" depending on location instead of one common pool.
 - [no] Allow picture upload for the device to help with identification (requested).
-- Add (or "define") connection ports separately from device creation; offer relevant data for quick ID through the OS (MAC address, interface name when running commands)
+- Edit contact person fields to include phone number and email
+    - Make it less ambiguous whether the contact person refers to an employee of OUR organization or of the supplier
+- Finish implementation of custom tag system
+- Add (or "define") connection ports separately (after) from device creation; offer relevant data for quick ID through the OS (MAC address, interface name when running commands)
 - Add another generic data section for sub-devices (HDDs, GPUs etc.) with templates for each type.
     - OR for a generic interface, allow users to define custom rows for data.
     - Allow defining TEMPLATES for Sub-Devices
 
 VLAN:
 - Implement more or less same feature set as RackTables.
-    - Unlike RackTables, give users a VLAN list.
+    - Unlike RackTables, give users a drop-down VLAN list (in any case, make it EASY to see what's available).
     - Offer contextual information depending on: router/switch device is connected to (?), which IP addresses are already used.
+
+Virtual resources:
+- Tie to Device custom fields? Likely the simplest option
+- Study and define types to include here
+- Maybe allow users to define a device's "subdevice" as a virtual resource?
 
 Monitoring:
 - Once interface is finalized for IM.
 - Either add it as a separate tab, or find way to integrate into existing UI.
 - Define scope
 
+User accounts
+- Implement the three roles: Admin, Technician, Read-only user
+    - Ensure that locations are well protected. "If a user is a Technician, they should only see their assigned location".
+- Implement Admin functionalities (and account management in general)
+- Implement read-only mode for the appropriate role
+
 Extra:
 - PDF export of inventory per: rack, location; depending on device type etc.
+- Logging system

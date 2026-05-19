@@ -19,6 +19,7 @@ export interface Device {
     name: string; // Used as Common Name visually
     label?: string | null;
     asset_tag?: string | null;
+    location: number; // Location ID
     rack?: number | null; // Rack ID
     position_u?: number | null;
     height_u: number;
@@ -85,14 +86,16 @@ export const inventoryService = {
         return data;
     },
 
-    getAllDevices: async () => {
-        const { data } = await api.get<Device[]>('/inventory/devices');
+    getAllDevices: async (locationId?: number | null) => {
+        const url = locationId ? `/inventory/devices?location_id=${locationId}` : '/inventory/devices';
+        const { data } = await api.get<Device[]>(url);
         return data;
     },
 
     createDevice: async (device: DeviceCreate) => {
         const { data } = await api.post<Device>('/inventory/devices', {
             ...device,
+            location_id: device.location,
             rack_id: device.rack !== undefined ? device.rack : null
         });
         return data;
@@ -109,10 +112,11 @@ export const inventoryService = {
     },
 
     updateDevice: async (id: number, device: Partial<DeviceCreate>) => {
-        const { data } = await api.put<Device>(`/inventory/devices/${id}`, {
-            ...device,
-            rack_id: device.rack !== undefined ? device.rack : undefined
-        });
+        const payload: any = { ...device };
+        if (device.rack !== undefined) payload.rack_id = device.rack;
+        if (device.location !== undefined) payload.location_id = device.location;
+        
+        const { data } = await api.put<Device>(`/inventory/devices/${id}`, payload);
         return data;
     },
 

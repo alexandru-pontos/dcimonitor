@@ -35,6 +35,7 @@ class Device(models.Model):
     name = models.CharField(max_length=100)
     label = models.CharField(max_length=100, blank=True, null=True)
     asset_tag = models.CharField(max_length=100, blank=True, null=True)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='devices')
     rack = models.ForeignKey(Rack, on_delete=models.CASCADE, related_name='devices', null=True, blank=True)
     position_u = models.PositiveIntegerField(help_text="Bottom-most U position", null=True, blank=True)
     height_u = models.PositiveIntegerField(default=1, help_text="Height in U")

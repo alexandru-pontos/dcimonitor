@@ -9,9 +9,10 @@ interface AssignToRackModalProps {
     onClose: () => void;
     onConfirm: (rackId: number, positionU: number) => void;
     deviceHeightU: number;
+    fixedLocationId?: number;
 }
 
-export default function AssignToRackModal({ isOpen, onClose, onConfirm, deviceHeightU }: AssignToRackModalProps) {
+export default function AssignToRackModal({ isOpen, onClose, onConfirm, deviceHeightU, fixedLocationId }: AssignToRackModalProps) {
     const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null);
     const [selectedRackId, setSelectedRackId] = useState<number | null>(null);
     const [selectedU, setSelectedU] = useState<number | null>(null);
@@ -42,8 +43,10 @@ export default function AssignToRackModal({ isOpen, onClose, onConfirm, deviceHe
             setSelectedLocationId(null);
             setSelectedRackId(null);
             setSelectedU(null);
+        } else if (fixedLocationId) {
+            setSelectedLocationId(fixedLocationId);
         }
-    }, [isOpen]);
+    }, [isOpen, fixedLocationId]);
 
     // Handle slot selection (validate if it fits)
     const handleSlotClick = (u: number) => {
@@ -86,7 +89,8 @@ export default function AssignToRackModal({ isOpen, onClose, onConfirm, deviceHe
                                 setSelectedRackId(null);
                                 setSelectedU(null);
                             }}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                            disabled={!!fixedLocationId}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
                         >
                             <option value="">All Locations</option>
                             {locations?.map(loc => (
