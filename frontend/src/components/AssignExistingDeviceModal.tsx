@@ -1,9 +1,11 @@
 import { useState, useMemo } from 'react';
 import Modal from './Modal';
-import { Search, FilterX, Monitor } from 'lucide-react';
+import { Search, FilterX, Monitor, MoreVertical } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { inventoryService } from '../services/inventory';
 import MultiSelect from './MultiSelect';
+import TagsTooltip from './TagsTooltip';
+import { useSettings } from '../context/SettingsContext';
 
 interface AssignExistingDeviceModalProps {
     isOpen: boolean;
@@ -26,14 +28,24 @@ export default function AssignExistingDeviceModal({
         enabled: isOpen && !!rackLocationId,
     });
 
+    const { data: globalTags } = useQuery({
+        queryKey: ['tags'],
+        queryFn: inventoryService.getTags,
+        enabled: isOpen,
+    });
+
+    const { compactTagsView } = useSettings();
+
     const [searchQuery, setSearchQuery] = useState('');
     const [filterType, setFilterType] = useState<string[]>([]);
     const [filterStatus, setFilterStatus] = useState<string[]>([]);
+    const [filterTags, setFilterTags] = useState<string[]>([]);
 
     const clearFilters = () => {
         setSearchQuery('');
         setFilterType([]);
         setFilterStatus([]);
+        setFilterTags([]);
     };
 
     const unassignedDevices = useMemo(() => {
@@ -50,14 +62,17 @@ export default function AssignExistingDeviceModal({
         if (filterStatus.length > 0) {
             result = result.filter(d => filterStatus.includes(d.status));
         }
+        if (filterTags.length > 0) {
+            result = result.filter(d => d.tags && d.tags.some(t => filterTags.includes(t.id.toString())));
+        }
 
         return result.sort((a, b) => a.name.localeCompare(b.name));
-    }, [devices, searchQuery, filterType, filterStatus]);
+    }, [devices, searchQuery, filterType, filterStatus, filterTags]);
 
-    const hasActiveFilters = searchQuery !== '' || filterType.length > 0 || filterStatus.length > 0;
+    const hasActiveFilters = searchQuery !== '' || filterType.length > 0 || filterStatus.length > 0 || filterTags.length > 0;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Assign Existing Device" size="xl">
+        <Modal isOpen={isOpen} onClose={onClose} title="Assign Existing Device" size="4xl">
             {isLoading ? (
                 <div className="py-8 text-center text-gray-500">Loading devices...</div>
             ) : (
@@ -111,6 +126,18 @@ export default function AssignExistingDeviceModal({
                                         ]}
                                     />
                                 </div>
+                                <div className="flex-1 sm:w-32 shrink-0">
+                                    <MultiSelect
+                                        label="Tags"
+                                        placeholder="All Tags"
+                                        selectedValues={filterTags}
+                                        onChange={setFilterTags}
+                                        options={globalTags?.map(tag => ({
+                                            value: tag.id.toString(),
+                                            label: tag.name
+                                        })) || []}
+                                    />
+                                </div>
                                 
                                 <div className="flex items-end">
                                     <button
@@ -140,6 +167,7 @@ export default function AssignExistingDeviceModal({
                                     <th className="px-4 py-3 font-semibold">Common Name</th>
                                     <th className="px-4 py-3 font-semibold">Label / Tag</th>
                                     <th className="px-4 py-3 font-semibold">Type</th>
+                                    <th className="px-4 py-3 font-semibold">Tags</th>
                                     <th className="px-4 py-3 font-semibold">Status</th>
                                     <th className="px-4 py-3 font-semibold text-right">Action</th>
                                 </tr>
@@ -147,7 +175,7 @@ export default function AssignExistingDeviceModal({
                             <tbody className="divide-y divide-gray-100 dark:divide-zinc-800 bg-white dark:bg-zinc-900">
                                 {unassignedDevices.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                                        <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
                                             {hasActiveFilters ? "No unassigned devices match the current filters." : "No unassigned devices available in storage."}
                                         </td>
                                     </tr>
@@ -175,6 +203,56 @@ export default function AssignExistingDeviceModal({
                                             <span className="capitalize px-2 py-0.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 rounded text-xs font-medium border border-gray-200 dark:border-zinc-700">
                                                 {device.device_type}
                                             </span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex flex-wrap gap-1 max-w-[150px]">
+                                                {device.tags && device.tags.length > 0 ? (
+                                                    compactTagsView && device.tags.length > 3 ? (
+                                                        <>
+                                                            {device.tags.slice(0, 3).map(tag => (
+                                                                <span
+                                                                    key={tag.id}
+                                                                    className="px-2 py-0.5 rounded text-[10px] font-medium whitespace-nowrap"
+                                                                    style={{ backgroundColor: `${tag.color}20`, color: tag.color, border: `1px solid ${tag.color}40` }}
+                                                                >
+                                                                    {tag.name}
+                                                                </span>
+                                                            ))}
+                                                            <TagsTooltip
+                                                                tagsContent={
+                                                                    <>
+                                                                        {device.tags.map(tag => (
+                                                                            <span
+                                                                                key={tag.id}
+                                                                                className="px-2 py-0.5 rounded text-[10px] font-medium whitespace-nowrap"
+                                                                                style={{ backgroundColor: `${tag.color}20`, color: tag.color, border: `1px solid ${tag.color}40` }}
+                                                                            >
+                                                                                {tag.name}
+                                                                            </span>
+                                                                        ))}
+                                                                    </>
+                                                                }
+                                                            >
+                                                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 dark:bg-zinc-800 text-gray-500 border border-gray-200 dark:border-zinc-700 cursor-help flex items-center justify-center">
+                                                                    <MoreVertical size={12} />
+                                                                </span>
+                                                            </TagsTooltip>
+                                                        </>
+                                                    ) : (
+                                                        device.tags.map(tag => (
+                                                            <span
+                                                                key={tag.id}
+                                                                className="px-2 py-0.5 rounded text-[10px] font-medium whitespace-nowrap"
+                                                                style={{ backgroundColor: `${tag.color}20`, color: tag.color, border: `1px solid ${tag.color}40` }}
+                                                            >
+                                                                {tag.name}
+                                                            </span>
+                                                        ))
+                                                    )
+                                                ) : (
+                                                    <span className="text-gray-400 text-xs">-</span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-4 py-3">
                                             <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${

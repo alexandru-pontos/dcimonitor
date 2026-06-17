@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import RackList from './pages/RackList';
 import RackView from './pages/RackView';
 import DeviceList from './pages/DeviceList';
+import Settings from './pages/Settings';
 
 export const router = createBrowserRouter([
     {
@@ -28,7 +29,7 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'settings',
-                element: <div>Settings Page</div>,
+                element: <Settings />,
             },
         ],
     },

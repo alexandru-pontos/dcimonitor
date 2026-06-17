@@ -1,15 +1,82 @@
 from typing import List
 from ninja import Router
 from django.shortcuts import get_object_or_404
-from .models import Location, Rack, Device
+from .models import Location, Rack, Device, Tag, Port
 from .schemas import (
     LocationSchema, LocationCreateSchema,
     RackSchema, RackCreateSchema, RackUpdateSchema, RackResizePayload,
     DashboardStatsSchema,
-    DeviceSchema, DeviceCreateSchema, DeviceUpdateSchema
+    DeviceSchema, DeviceCreateSchema, DeviceUpdateSchema,
+    TagSchema, TagCreateSchema
 )
 
 router = Router()
+
+def sync_device_ports(device, ports_data):
+    existing_ports = {p.id: p for p in device.ports.all()}
+    incoming_ids = set()
+    
+    for port_data in ports_data:
+        port_id = port_data.id
+        port_dict = port_data.dict(exclude={'id', 'connected_port_id'}, exclude_unset=True)
+        connected_port_id = getattr(port_data, 'connected_port_id', None)
+
+        if port_id and port_id in existing_ports:
+            port = existing_ports[port_id]
+            for k, v in port_dict.items():
+                setattr(port, k, v)
+            port.save()
+            incoming_ids.add(port_id)
+        else:
+            port = Port.objects.create(device=device, **port_dict)
+            incoming_ids.add(port.id)
+            port_id = port.id
+            existing_ports[port_id] = port
+            
+        if connected_port_id is not None:
+            remote_port = get_object_or_404(Port, id=connected_port_id)
+            if remote_port.connected_port and remote_port.connected_port.id != port_id:
+                old_connected = remote_port.connected_port
+                old_connected.connected_port = None
+                old_connected.save()
+            
+            port.connected_port = remote_port
+            port.save()
+            
+            remote_port.connected_port = port
+            remote_port.save()
+        else:
+            if port.connected_port:
+                old_connected = port.connected_port
+                old_connected.connected_port = None
+                old_connected.save()
+                
+                port.connected_port = None
+                port.save()
+
+    for p_id, p in existing_ports.items():
+        if p_id not in incoming_ids:
+            if p.connected_port:
+                remote = p.connected_port
+                remote.connected_port = None
+                remote.save()
+            p.delete()
+
+# --- Tags ---
+@router.get("/tags", response=List[TagSchema])
+def list_tags(request):
+    return Tag.objects.all()
+
+@router.post("/tags", response=TagSchema)
+def create_tag(request, payload: TagCreateSchema):
+    tag = Tag.objects.create(**payload.dict())
+    return tag
+
+@router.delete("/tags/{tag_id}")
+def delete_tag(request, tag_id: int):
+    tag = get_object_or_404(Tag, id=tag_id)
+    tag.delete()
+    return {"success": True}
 
 # --- Locations ---
 @router.get("/locations", response=List[LocationSchema])
@@ -20,6 +87,12 @@ def list_locations(request):
 def create_location(request, payload: LocationCreateSchema):
     location = Location.objects.create(**payload.dict())
     return location
+
+@router.delete("/locations/{location_id}")
+def delete_location(request, location_id: int):
+    location = get_object_or_404(Location, id=location_id)
+    location.delete()
+    return {"success": True}
 
 # --- Racks ---
 @router.get("/racks", response=List[RackSchema])
@@ -153,6 +226,9 @@ def create_device(request, payload: DeviceCreateSchema):
     data = payload.dict()
     rack_id = data.pop('rack_id', None)
     location_id = data.pop('location_id')
+    tag_ids = data.pop('tags', [])
+    ports_data = data.pop('ports', [])
+    
     
     location = get_object_or_404(Location, id=location_id)
     rack = None
@@ -182,6 +258,10 @@ def create_device(request, payload: DeviceCreateSchema):
                  raise HttpError(409, f"Overlap detected with device '{d.name}' at U{d.position_u}.")
 
     device = Device.objects.create(location=location, rack=rack, **data)
+    if tag_ids:
+        device.tags.set(tag_ids)
+    if ports_data:
+        sync_device_ports(device, payload.ports)
     return device
 
 # Update Device Endpoint
@@ -189,7 +269,14 @@ def create_device(request, payload: DeviceCreateSchema):
 def update_device(request, device_id: int, payload: DeviceUpdateSchema):
     device = get_object_or_404(Device, id=device_id)
     data = payload.dict(exclude_unset=True)
-    print(f"DEBUG update_device: {data}")
+    
+    tag_ids = None
+    if 'tags' in data:
+        tag_ids = data.pop('tags')
+        
+    ports_data = None
+    if 'ports' in data:
+        ports_data = data.pop('ports')
     
     # Handle Relations
     if 'location_id' in data:
@@ -235,10 +322,20 @@ def update_device(request, device_id: int, payload: DeviceUpdateSchema):
                  raise HttpError(409, f"Overlap detected with device '{d.name}' at U{d.position_u}.")
 
     device.save()
+    if tag_ids is not None:
+        device.tags.set(tag_ids)
+    if ports_data is not None:
+        sync_device_ports(device, payload.ports)
     return device
 
 @router.delete("/devices/{device_id}")
 def delete_device(request, device_id: int):
     device = get_object_or_404(Device, id=device_id)
+    # Disconnect ports cleanly before deletion
+    for port in device.ports.all():
+        if port.connected_port:
+            remote = port.connected_port
+            remote.connected_port = None
+            remote.save()
     device.delete()
     return {"success": True}

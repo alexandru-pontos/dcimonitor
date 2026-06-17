@@ -6,6 +6,40 @@ export interface Location {
     description: string;
 }
 
+export interface Tag {
+    id: number;
+    name: string;
+    color: string;
+}
+
+export interface ConnectedPortDetails {
+    id: number;
+    name: string;
+    visible_label?: string | null;
+    mac_address?: string | null;
+    device_id: number;
+    device_name: string;
+    location_name: string;
+}
+
+export interface Port {
+    id: number;
+    name: string;
+    visible_label?: string | null;
+    interface_type: string;
+    mac_address?: string | null;
+    connected_port?: ConnectedPortDetails | null;
+}
+
+export interface PortCreateUpdate {
+    id?: number;
+    name: string;
+    visible_label?: string | null;
+    interface_type: string;
+    mac_address?: string | null;
+    connected_port_id?: number | null;
+}
+
 export interface Rack {
     id?: number;
     name: string;
@@ -26,7 +60,7 @@ export interface Device {
     device_type: 'server' | 'switch' | 'router' | 'pdu' | 'other';
     status: 'active' | 'maintenance' | 'offline' | 'decommissioned';
     mounting_configuration: string[]; // ['front', 'middle', 'back']
-    tags: string[];
+    tags: Tag[];
     specs: {
         serial_number?: string;
         contact_person?: string;
@@ -37,11 +71,12 @@ export interface Device {
         sw_warranty_expiration?: string;
         [key: string]: any;
     };
+    ports: Port[];
     created_at?: string;
     updated_at?: string;
 }
 
-export type DeviceCreate = Omit<Device, 'id' | 'created_at' | 'updated_at'>;
+export type DeviceCreate = Omit<Device, 'id' | 'created_at' | 'updated_at' | 'tags' | 'ports'> & { tags: number[], ports: PortCreateUpdate[] };
 
 export const inventoryService = {
     getLocations: async () => {
@@ -51,6 +86,26 @@ export const inventoryService = {
 
     createLocation: async (location: Omit<Location, 'id'>) => {
         const { data } = await api.post<Location>('/inventory/locations', location);
+        return data;
+    },
+
+    deleteLocation: async (id: number) => {
+        const { data } = await api.delete(`/inventory/locations/${id}`);
+        return data;
+    },
+
+    getTags: async () => {
+        const { data } = await api.get<Tag[]>('/inventory/tags');
+        return data;
+    },
+
+    createTag: async (tag: Omit<Tag, 'id'>) => {
+        const { data } = await api.post<Tag>('/inventory/tags', tag);
+        return data;
+    },
+
+    deleteTag: async (id: number) => {
+        const { data } = await api.delete(`/inventory/tags/${id}`);
         return data;
     },
 

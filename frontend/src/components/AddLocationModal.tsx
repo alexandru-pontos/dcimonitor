@@ -12,6 +12,7 @@ interface AddLocationModalProps {
 
 export default function AddLocationModal({ isOpen, onClose, onSuccess }: AddLocationModalProps) {
     const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
     const queryClient = useQueryClient();
     const { addToast } = useToast();
 
@@ -21,6 +22,7 @@ export default function AddLocationModal({ isOpen, onClose, onSuccess }: AddLoca
             queryClient.invalidateQueries({ queryKey: ['locations'] });
             addToast({ title: 'Location Added', type: 'success' });
             setName('');
+            setDescription('');
             if (onSuccess) onSuccess(data.id);
             onClose();
         },
@@ -31,7 +33,7 @@ export default function AddLocationModal({ isOpen, onClose, onSuccess }: AddLoca
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        createMutation.mutate({ name, description: '' });
+        createMutation.mutate({ name, description });
     };
 
     return (
@@ -39,7 +41,7 @@ export default function AddLocationModal({ isOpen, onClose, onSuccess }: AddLoca
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Location Name
+                        Location Name *
                     </label>
                     <input
                         type="text"
@@ -48,6 +50,18 @@ export default function AddLocationModal({ isOpen, onClose, onSuccess }: AddLoca
                         onChange={(e) => setName(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                         placeholder="e.g. Server Room A"
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Description
+                    </label>
+                    <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none resize-y min-h-[80px]"
+                        placeholder="Optional details about this location..."
                     />
                 </div>
 

@@ -13,15 +13,37 @@ Devices:
 - [x] When adding from Rack view, ask for basic device info like in RackTables.
 - [x]When adding/editing device in Device view, offer advanced info like in OpenDCIM.
 - [x] Separate devices from the Rack view so they can exist outside of it.
-    - [?] Implement separate "storage rooms" depending on location instead of one common pool.
-- [no] Allow picture upload for the device to help with identification (requested).
 - Edit contact person fields to include phone number and email
     - Make it less ambiguous whether the contact person refers to an employee of OUR organization or of the supplier
-- Finish implementation of custom tag system
-- Add (or "define") connection ports separately (after) from device creation; offer relevant data for quick ID through the OS (MAC address, interface name when running commands)
+- [x] Finish implementation of custom tag system
+- [x] Add (or "define") connection ports separately (after) from device creation; offer relevant data for quick ID through the OS (MAC address, interface name when running commands)
 - Add another generic data section for sub-devices (HDDs, GPUs etc.) with templates for each type.
     - OR for a generic interface, allow users to define custom rows for data.
     - Allow defining TEMPLATES for Sub-Devices
+- Consolidating the above:
+    - Add collapsable categories:
+        - Obligatory: appears dynamically if one of the mandatory fields isn't filled; this section appears above all the others. Maybe give it a red outline (but not red filling!)
+        - Basic information (extended by default): contains Common name, Label, Asset Tag, Type, Status, Availability
+            - Of note: "Status" refers to what state the device is in. (Online, Offline, Maintenance, Testing, QA, Being configured; if you have any suggestions for other options, let me know.)
+            - "Availability" refers to whether the device is able to service any request (only two values: Available and Unavailable)
+            - Add the custom tagging section here, as its own row.
+        - Device Information: Height, Mounting Depth, Device Name, Serial Number, Nominal power draw, Software (OS)
+        - Positioning: Location (where it is), Rack (which rack and where), button to send user to page of rack
+        - Network: Ports (simple definitions: name, visible label, interface, MAC Address, remote device), VLAN (IP, )
+            - For the remote device, if we try to edit it through the modal, we could give the user another modal of racks at the same location, allowing them to select a device after entering a rack's "view" page.
+        - Support & Warranty:
+            - Install date and last audit date
+            - Contact person: name, email, phone
+            - Hardware warranty: expiration date, manufacturer support contact details
+            - Software warranty: expiration date, developer support contact details
+        - Custom data:
+            - Entry subject: text
+            - Entry type (drop-down): Hardware, Software, Network, Note, Undefined
+            - Entry details: text (markdown support?)
+    - [x] Make the modals WIDER.
+    - [x] Add a "navigation menu" at the rightmost end of the modal so the user can quickly navigate between categories.
+    - Add a little "i" icon next to the entry titles. Hovering over this icon will offer a short explanation of what that entry is supposed to be filled with
+    - At the top, next to the "Edit [device]" modal title, let the user access the "view-only" mode.
 
 VLAN:
 - Implement more or less same feature set as RackTables.
@@ -34,16 +56,17 @@ Virtual resources:
 - Maybe allow users to define a device's "subdevice" as a virtual resource?
 
 Monitoring:
-- Once interface is finalized for IM.
+- Once interface is finalized for inventory management.
 - Either add it as a separate tab, or find way to integrate into existing UI.
-- Define scope
+- Study Graphana API for embedding dashboards. (Graphana will be used for monitoring)
 
 User accounts
 - Implement the three roles: Admin, Technician, Read-only user
-    - Ensure that locations are well protected. "If a user is a Technician, they should only see their assigned location".
+    - Ensure that locations are well protected. "If a user is a Technician, they should only see their assigned location". (Necessarry?)
 - Implement Admin functionalities (and account management in general)
 - Implement read-only mode for the appropriate role
 
 Extra:
 - PDF export of inventory per: rack, location; depending on device type etc.
 - Logging system
+- XML export of inventory (as requested) and import, for quick migration of database

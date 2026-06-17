@@ -1,6 +1,54 @@
 from typing import List, Optional
 from ninja import ModelSchema, Schema
-from .models import Location, Rack, Device
+from .models import Location, Rack, Device, Tag, Port
+
+class ConnectedPortDetailsSchema(Schema):
+    id: int
+    name: str
+    visible_label: Optional[str] = None
+    mac_address: Optional[str] = None
+    device_id: int
+    device_name: str
+    location_name: str
+
+class PortSchema(ModelSchema):
+    connected_port: Optional[ConnectedPortDetailsSchema] = None
+
+    class Meta:
+        model = Port
+        fields = ['id', 'name', 'visible_label', 'interface_type', 'mac_address']
+
+    @staticmethod
+    def resolve_connected_port(obj):
+        if obj.connected_port:
+            return {
+                "id": obj.connected_port.id,
+                "name": obj.connected_port.name,
+                "visible_label": obj.connected_port.visible_label,
+                "mac_address": obj.connected_port.mac_address,
+                "device_id": obj.connected_port.device.id,
+                "device_name": obj.connected_port.device.name,
+                "location_name": obj.connected_port.device.location.name,
+            }
+        return None
+
+class PortCreateUpdateSchema(Schema):
+    id: Optional[int] = None
+    name: str
+    visible_label: Optional[str] = None
+    interface_type: str
+    mac_address: Optional[str] = None
+    connected_port_id: Optional[int] = None
+
+class TagSchema(ModelSchema):
+    class Meta:
+        model = Tag
+        fields = ['id', 'name', 'color']
+
+class TagCreateSchema(ModelSchema):
+    class Meta:
+        model = Tag
+        fields = ['name', 'color']
 
 class LocationSchema(ModelSchema):
     class Meta:
@@ -51,7 +99,8 @@ class DashboardStatsSchema(Schema):
 
 class DeviceSchema(ModelSchema):
     mounting_configuration: list[str] = []
-    tags: list[str] = []
+    tags: List[TagSchema] = []
+    ports: List[PortSchema] = []
     class Meta:
         model = Device
         fields = ['id', 'name', 'label', 'asset_tag', 'location', 'rack', 'position_u', 'height_u', 'device_type', 'status', 'specs', 'created_at', 'updated_at', 'mounting_configuration', 'tags']
@@ -61,11 +110,12 @@ class DeviceCreateSchema(ModelSchema):
     rack_id: Optional[int] = None
     position_u: Optional[int] = None
     mounting_configuration: list[str] = ['middle'] # Default to middle
-    tags: list[str] = []
+    tags: List[int] = []
+    ports: List[PortCreateUpdateSchema] = []
     
     class Meta:
         model = Device
-        fields = ['name', 'label', 'asset_tag', 'position_u', 'height_u', 'device_type', 'status', 'specs', 'mounting_configuration', 'tags']
+        fields = ['name', 'label', 'asset_tag', 'position_u', 'height_u', 'device_type', 'status', 'specs', 'mounting_configuration']
 
 class DeviceUpdateSchema(Schema):
     name: str = None
@@ -78,5 +128,6 @@ class DeviceUpdateSchema(Schema):
     status: str = None
     device_type: str = None
     mounting_configuration: List[str] = None
-    tags: List[str] = None
+    tags: List[int] = None
+    ports: List[PortCreateUpdateSchema] = None
     specs: dict = None

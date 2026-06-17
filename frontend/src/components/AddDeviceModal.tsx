@@ -5,6 +5,13 @@ import type { Device, DeviceCreate } from '../services/inventory';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useToast } from '../context/ToastContext';
 import AssignToRackModal from './AssignToRackModal';
+import DeviceTagsModal from './DeviceTagsModal';
+import ModalContentLayout from './ModalContentLayout';
+import NetworkPortsSection from './NetworkPortsSection';
+import PortConnectionModal from './PortConnectionModal';
+import { AlertCircle } from 'lucide-react';
+import clsx from 'clsx';
+import type { PortCreateUpdate, Port } from '../services/inventory';
 
 interface AddDeviceModalProps {
     isOpen: boolean;
@@ -20,10 +27,20 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
     const queryClient = useQueryClient();
 
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [isTagsModalOpen, setIsTagsModalOpen] = useState(false);
+    const [isPortModalOpen, setIsPortModalOpen] = useState(false);
+    const [activePortIndex, setActivePortIndex] = useState<number | null>(null);
+    const [showStorageWarning, setShowStorageWarning] = useState(false);
 
     const { data: locations } = useQuery({
         queryKey: ['locations'],
         queryFn: inventoryService.getLocations,
+        enabled: isOpen,
+    });
+
+    const { data: globalTags } = useQuery({
+        queryKey: ['tags'],
+        queryFn: inventoryService.getTags,
         enabled: isOpen,
     });
 
@@ -48,7 +65,7 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
     const [positionU, setPositionU] = useState<number | null>(initialPosition || 1);
 
     // Extra fields
-    const [tagsInput, setTagsInput] = useState('');
+    const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
     const [serialNumber, setSerialNumber] = useState('');
     const [contactPerson, setContactPerson] = useState('');
     const [hwType, setHwType] = useState('');
@@ -56,6 +73,16 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
     const [supportContact, setSupportContact] = useState('');
     const [os, setOs] = useState('');
     const [swWarranty, setSwWarranty] = useState('');
+    
+    // Ports
+    const [ports, setPorts] = useState<PortCreateUpdate[]>([]);
+    
+    const navItems = [
+        { id: 'basic-info', label: 'Basic Information' },
+        { id: 'positioning', label: 'Positioning' },
+        { id: 'network', label: 'Network Ports' },
+        { id: 'extra-properties', label: 'Extra Properties' }
+    ];
 
     const mutation = useMutation({
         mutationFn: inventoryService.createDevice,
@@ -97,7 +124,7 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
         setLocationId('');
         setAssignedRackId(rackId);
         setPositionU(initialPosition || 1);
-        setTagsInput('');
+        setSelectedTagIds([]);
         setSerialNumber('');
         setContactPerson('');
         setHwType('');
@@ -105,7 +132,25 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
         setSupportContact('');
         setOs('');
         setSwWarranty('');
+        setPorts([]);
         setIsAssignModalOpen(false);
+        setShowStorageWarning(false);
+    };
+
+    const handleSendToStorage = () => {
+        const hasConnections = ports.some(p => p.connected_port_id);
+        if (hasConnections) {
+            setShowStorageWarning(true);
+        } else {
+            commitSendToStorage();
+        }
+    };
+
+    const commitSendToStorage = () => {
+        setAssignedRackId(null);
+        setPositionU(null);
+        setPorts(prev => prev.map(p => ({ ...p, connected_port_id: null, connected_port: undefined, _remote_details: undefined })));
+        setShowStorageWarning(false);
     };
 
     const handleConfigChange = (col: string) => {
@@ -122,8 +167,6 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
             return;
         }
 
-        const tags = tagsInput.split(',').map(t => t.trim()).filter(t => t.length > 0);
-
         const payload: DeviceCreate = {
             name,
             location: Number(locationId),
@@ -135,7 +178,7 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
             status,
             rack: assignedRackId,
             mounting_configuration: mountingConfig,
-            tags,
+            tags: selectedTagIds,
             specs: {
                 serial_number: serialNumber || undefined,
                 contact_person: contactPerson || undefined,
@@ -144,7 +187,8 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
                 support_contact_expiration: supportContact || undefined,
                 software_type: os || undefined,
                 sw_warranty_expiration: swWarranty || undefined,
-            }
+            },
+            ports: ports
         };
 
         mutation.mutate(payload);
@@ -156,13 +200,43 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
         setIsAssignModalOpen(false);
     };
 
+    const handleSelectRemotePort = (remoteDevice: Device, remotePort: Port) => {
+        if (activePortIndex !== null) {
+            setPorts(prev => {
+                const newPorts = [...prev];
+                newPorts[activePortIndex] = {
+                    ...newPorts[activePortIndex],
+                    connected_port_id: remotePort.id,
+                    connected_port: {
+                        id: remotePort.id,
+                        name: remotePort.name,
+                        visible_label: remotePort.visible_label,
+                        mac_address: remotePort.mac_address,
+                        device_id: remoteDevice.id,
+                        device_name: remoteDevice.name,
+                        location_name: ''
+                    }
+                } as any;
+                return newPorts;
+            });
+        }
+    };
+
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Add New Device" size="xl">
-            <form onSubmit={handleSubmit} className="space-y-8 h-full max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
-                
-                {/* --- BASIC INFO SECTION --- */}
-                <section>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h3>
+        <Modal isOpen={isOpen} onClose={onClose} title="Add New Device" size="7xl">
+            <div className="relative flex flex-col h-full max-h-[75vh]">
+                <form
+                    onSubmit={handleSubmit}
+                    className={clsx("flex flex-col flex-1 overflow-hidden transition-all duration-300",
+                        showStorageWarning && "blur-sm pointer-events-none opacity-50"
+                    )}
+                >
+                    <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                    <ModalContentLayout navItems={navItems}>
+                        <div className="space-y-8 pb-8">
+                            {/* --- BASIC INFO SECTION --- */}
+                            <section id="basic-info">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h3>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div className="col-span-2 md:col-span-1">
@@ -177,17 +251,22 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location *</label>
                             <select
-                                value={type}
-                                onChange={(e) => setType(e.target.value as any)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                                required
+                                value={locationId}
+                                onChange={(e) => {
+                                    setLocationId(Number(e.target.value));
+                                    setAssignedRackId(null);
+                                    setPositionU(null);
+                                }}
+                                disabled={!!rackId} // Disable if adding from a specific rack
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
                             >
-                                <option value="server">Server</option>
-                                <option value="switch">Switch</option>
-                                <option value="router">Router</option>
-                                <option value="pdu">PDU</option>
-                                <option value="other">Other</option>
+                                <option value="" disabled>Select Location</option>
+                                {locations?.map(loc => (
+                                    <option key={loc.id} value={loc.id}>{loc.name}</option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -258,22 +337,17 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location *</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
                             <select
-                                required
-                                value={locationId}
-                                onChange={(e) => {
-                                    setLocationId(Number(e.target.value));
-                                    setAssignedRackId(null);
-                                    setPositionU(null);
-                                }}
-                                disabled={!!rackId} // Disable if adding from a specific rack
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
+                                value={type}
+                                onChange={(e) => setType(e.target.value as any)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
                             >
-                                <option value="" disabled>Select Location</option>
-                                {locations?.map(loc => (
-                                    <option key={loc.id} value={loc.id}>{loc.name}</option>
-                                ))}
+                                <option value="server">Server</option>
+                                <option value="switch">Switch</option>
+                                <option value="router">Router</option>
+                                <option value="pdu">PDU</option>
+                                <option value="other">Other</option>
                             </select>
                         </div>
                     </div>
@@ -282,7 +356,7 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
                 <hr className="border-gray-200 dark:border-zinc-800" />
 
                 {/* --- POSITIONING SECTION --- */}
-                <section>
+                <section id="positioning">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Positioning</h3>
                     
                     {assignedRackId ? (
@@ -310,10 +384,7 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
                             </div>
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setAssignedRackId(null);
-                                    setPositionU(null);
-                                }}
+                                onClick={handleSendToStorage}
                                 className="px-4 py-2 border border-gray-300 dark:border-zinc-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                             >
                                 Send device to storage
@@ -337,19 +408,52 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
 
                 <hr className="border-gray-200 dark:border-zinc-800" />
 
+                {/* --- NETWORK PORTS SECTION --- */}
+                <NetworkPortsSection 
+                    ports={ports} 
+                    setPorts={setPorts} 
+                    onSelectRemotePort={(index) => {
+                        setActivePortIndex(index);
+                        setIsPortModalOpen(true);
+                    }} 
+                />
+
+                <hr className="border-gray-200 dark:border-zinc-800" />
+
                 {/* --- EXTRA PROPERTIES SECTION --- */}
-                <section>
+                <section id="extra-properties">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Extra Properties</h3>
 
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags (Comma separated)</label>
-                        <input
-                            type="text"
-                            value={tagsInput}
-                            onChange={(e) => setTagsInput(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-                            placeholder="e.g. database, prod, high-priority"
-                        />
+                    <div className="mb-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tags</label>
+                            <button
+                                type="button"
+                                onClick={() => setIsTagsModalOpen(true)}
+                                className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium"
+                            >
+                                Edit tags
+                            </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-lg border border-gray-200 dark:border-zinc-700 min-h-[46px]">
+                            {selectedTagIds.length === 0 ? (
+                                <span className="text-sm text-gray-500 dark:text-gray-400 italic">No tags assigned</span>
+                            ) : (
+                                selectedTagIds.map(id => {
+                                    const tag = globalTags?.find(t => t.id === id);
+                                    if (!tag) return null;
+                                    return (
+                                        <span 
+                                            key={tag.id}
+                                            className="px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                            style={{ backgroundColor: `${tag.color}20`, color: tag.color, border: `1px solid ${tag.color}40` }}
+                                        >
+                                            {tag.name}
+                                        </span>
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
 
                     <div className="mb-4">
@@ -424,9 +528,12 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
                             />
                         </div>
                     </div>
-                </section>
+                        </section>
+                        </div>
+                    </ModalContentLayout>
+                </div>
 
-                <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-zinc-800 sticky bottom-0 bg-white dark:bg-zinc-900">
+                <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
                     <button
                         type="button"
                         onClick={onClose}
@@ -444,12 +551,63 @@ export default function AddDeviceModal({ isOpen, onClose, onSuccess, rackId, rac
                 </div>
             </form>
 
+            {/* Storage Warning Overlay */}
+            {showStorageWarning && (
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center p-4 animate-in fade-in zoom-in duration-200">
+                    <div className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm p-6 rounded-xl shadow-2xl border border-gray-200 dark:border-zinc-700 max-w-sm w-full">
+                        <div className="flex justify-center mb-4">
+                            <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-full text-amber-600 dark:text-amber-400">
+                                <AlertCircle size={32} />
+                            </div>
+                        </div>
+
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
+                            Send to Storage?
+                        </h3>
+
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                            Sending this device to storage will remove all connections between it and other devices.
+                        </p>
+
+                        <div className="flex justify-center gap-4">
+                            <button
+                                onClick={() => setShowStorageWarning(false)}
+                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                            >
+                                Undo change
+                            </button>
+                            <button
+                                onClick={commitSendToStorage}
+                                className="px-4 py-2 text-white rounded-lg font-medium transition-colors bg-amber-600 hover:bg-amber-700"
+                            >
+                                I understand
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            </div>
+
             <AssignToRackModal 
                 isOpen={isAssignModalOpen}
                 onClose={() => setIsAssignModalOpen(false)}
                 onConfirm={handleAssignConfirm}
                 deviceHeightU={heightU}
                 fixedLocationId={typeof locationId === 'number' ? locationId : undefined}
+            />
+
+            <DeviceTagsModal
+                isOpen={isTagsModalOpen}
+                onClose={() => setIsTagsModalOpen(false)}
+                selectedTagIds={selectedTagIds}
+                onChange={setSelectedTagIds}
+            />
+
+            <PortConnectionModal
+                isOpen={isPortModalOpen}
+                onClose={() => setIsPortModalOpen(false)}
+                onSelect={handleSelectRemotePort}
+                defaultLocationId={typeof locationId === 'number' ? locationId : undefined}
             />
         </Modal>
     );

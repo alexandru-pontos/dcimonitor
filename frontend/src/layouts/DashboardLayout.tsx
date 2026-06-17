@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import { useQuery } from '@tanstack/react-query';
 import { inventoryService } from '../services/inventory';
 import AddLocationModal from '../components/AddLocationModal';
+import RemoveLocationModal from '../components/RemoveLocationModal';
 import { useTheme } from '../context/ThemeContext';
 import { ToastProvider } from '../context/ToastContext';
 
@@ -13,6 +14,7 @@ export default function DashboardLayout() {
     const { theme, toggleTheme } = useTheme();
     const [selectedLocationId, setSelectedLocationId] = useState<number | null>(null);
     const [isAddLocationOpen, setIsAddLocationOpen] = useState(false);
+    const [isRemoveLocationOpen, setIsRemoveLocationOpen] = useState(false);
 
     const { data: locations } = useQuery({
         queryKey: ['locations'],
@@ -57,6 +59,8 @@ export default function DashboardLayout() {
                                         const val = e.target.value;
                                         if (val === 'add_new') {
                                             setIsAddLocationOpen(true);
+                                        } else if (val === 'remove_location') {
+                                            setIsRemoveLocationOpen(true);
                                         } else if (val === '') {
                                             setSelectedLocationId(null);
                                         } else {
@@ -70,6 +74,7 @@ export default function DashboardLayout() {
                                         <option key={loc.id} value={loc.id}>{loc.name}</option>
                                     ))}
                                     <option value="add_new">-- Add Location --</option>
+                                    <option value="remove_location">-- Remove Location --</option>
                                 </select>
                                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 dark:text-gray-400">
                                     <MapPin size={14} />
@@ -111,7 +116,7 @@ export default function DashboardLayout() {
                                 !sidebarOpen && "justify-center px-0"
                             )}
                         >
-                            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                            {theme === 'dark' ? <Sun size={20} className={clsx("shrink-0", !sidebarOpen && "mx-auto")} /> : <Moon size={20} className={clsx("shrink-0", !sidebarOpen && "mx-auto")} />}
                             {sidebarOpen && <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
                         </button>
 
@@ -136,6 +141,16 @@ export default function DashboardLayout() {
                 isOpen={isAddLocationOpen}
                 onClose={() => setIsAddLocationOpen(false)}
                 onSuccess={(newId) => setSelectedLocationId(newId)}
+            />
+            
+            <RemoveLocationModal
+                isOpen={isRemoveLocationOpen}
+                onClose={() => setIsRemoveLocationOpen(false)}
+                onLocationDeleted={(id) => {
+                    if (selectedLocationId === id) {
+                        setSelectedLocationId(null);
+                    }
+                }}
             />
         </ToastProvider>
     );
